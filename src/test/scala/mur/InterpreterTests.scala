@@ -65,7 +65,7 @@ class InterpreterTests  extends FreeSpec with Matchers {
     " and output its value" in {
       val prog = Program(Seq(
         VarDef("n", Literal(500)),
-        Out(Identifier("n"))
+        Out(Id("n"))
       ))
       val result = new Interpreter().run(prog)
 

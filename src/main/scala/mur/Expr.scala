@@ -3,7 +3,8 @@ package mur
 sealed trait Expr
 case class Literal(value: AnyVal) extends Expr
 case class Brackets(expr: Expr) extends Expr
-case class Identifier(name: String) extends Expr
+case class Id(name: String) extends Expr
+case class Sequence(begin: Expr, end: Expr) extends Expr
 
 sealed trait Op extends Expr {
   def left: Expr
@@ -15,6 +16,9 @@ case class Mul(left: Expr, right: Expr) extends Op
 case class Div(left: Expr, right: Expr) extends Op
 case class Pow(left: Expr, right: Expr) extends Op
 
+case class MapSeq(seq: Expr, x: Id, expr: Expr) extends Expr
+case class ReduceSeq(seq: Expr, init: Expr, x: Id, y: Id, expr: Expr) extends Expr
+
 sealed trait ExprValue
 case class Num(value: Int) extends ExprValue {
   override def toString: String = value.toString
@@ -22,6 +26,7 @@ case class Num(value: Int) extends ExprValue {
 case class Real(value: Double) extends ExprValue {
   override def toString: String = value.toString
 }
+case class NumRange(value: Range) extends ExprValue
 
 case class ExprResult(value: Option[ExprValue], error: Option[String] = None)
 
@@ -32,10 +37,21 @@ object Expr {
       case Literal(i: Int) => ExprResult(Some(Num(i)))
       case Literal(v) => ExprResult(None, Some(s"invalid literal type (${v.getClass.getName})"))
       case Brackets(expr) => calc(expr, ctx)
-      case Identifier(name) =>
+      case Id(name) =>
         ctx.ids.get(name) match {
           case None => ExprResult(None, Some(s"Identifier $name is not defined"))
           case value => ExprResult(value)
+        }
+      case Sequence(begin, end) =>
+        val (beginResult, endResult) = (calc(begin, ctx), calc(end, ctx))
+        (beginResult, endResult) match {
+          case (ExprResult(Some(Num(bv)), None), ExprResult(Some(Num(ev)), None)) =>
+            if (bv <= ev)
+              ExprResult(Some(NumRange(bv to ev)), None)
+            else
+              ExprResult(None, Some(s"Wrong params of the sequence: ${bv}..${ev}"))
+          case (error @ ExprResult(None, _), _) => error
+          case (_, error @ ExprResult(None, _)) => error
         }
       case op: Op =>
         val (leftValue, rightValue) = (calc(op.left, ctx), calc(op.right, ctx))
@@ -51,6 +67,8 @@ object Expr {
               case _: Pow => ExprValue.pow(lvalue, rvalue)
             }
         }
+      case map: MapSeq => MapReduce.calc(map, ctx)
+      case reduce: ReduceSeq => MapReduce.calc(reduce, ctx)
     }
   }
 }
