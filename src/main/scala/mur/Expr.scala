@@ -71,6 +71,37 @@ object Expr {
       case reduce: ReduceSeq => MapReduce.calc(reduce, ctx)
     }
   }
+
+  def transform(orig: Expr, from: Id, to: Literal): Expr = {
+    orig match {
+      case _: Literal => orig
+      case br @ Brackets(expr) => br.copy(transform(expr, from, to))
+      case id: Id if id == from => to
+      case seq @ Sequence(begin, end) =>
+        seq.copy(transform(begin, from, to), transform(end, from, to))
+      case plus @ Plus(left, right) =>
+        plus.copy(transform(left, from, to), transform(right, from, to))
+      case minus @ Minus(left, right) =>
+        minus.copy(transform(left, from, to), transform(right, from, to))
+      case mul @ Mul(left, right) =>
+        mul.copy(transform(left, from, to), transform(right, from, to))
+      case div @ Div(left, right) =>
+        div.copy(transform(left, from, to), transform(right, from, to))
+      case pow @ Pow(left, right) =>
+        pow.copy(transform(left, from, to), transform(right, from, to))
+      case mapSeq: MapSeq =>
+        mapSeq.copy(
+          seq = transform(mapSeq.seq, from, to),
+          expr = transform(mapSeq.expr, from, to)
+        )
+      case reduceSeq: ReduceSeq =>
+        reduceSeq.copy(
+          seq = transform(reduceSeq.seq, from, to),
+          init = transform(reduceSeq.init, from, to),
+          expr = transform(reduceSeq.expr, from, to)
+        )
+    }
+  }
 }
 
 object ExprValue {
