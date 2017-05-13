@@ -101,13 +101,17 @@ class ParserTests extends FreeSpec with Matchers {
       )
     }
     "reduce" in {
-      assert(Parsers.parse("var r = reduce(sequence, 0, x y -> x + y)") ==
+      assert(Parsers.parse("var r = 4 * reduce(sequence, 0, x y -> x + y)") ==
         Program(Seq(
-          VarDef("r", ReduceSeq(
-            Id("sequence"), Literal(0),
-            Id("x"), Id("y"),
-            Plus(Id("x"), Id("y"))
-          ))
+          VarDef("r",
+            Mul(Literal(4),
+              ReduceSeq(
+                Id("sequence"), Literal(0),
+                Id("x"), Id("y"),
+                Plus(Id("x"), Id("y"))
+              )
+            )
+          )
         ))
       )
     }

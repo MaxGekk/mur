@@ -17,7 +17,7 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     case (e) => Brackets(e)
   }
 
-  def operand = (num | brackets | id)
+  def operand = (map | reduce | num | brackets | id)
 
   def pow = chainl1(operand, "^" ^^^ Pow)
   def term = chainl1(pow, "*" ^^^ Mul | "/" ^^^ Div)

@@ -33,8 +33,9 @@ object Main {
     Out(Id("pi"))
   ))
   def main(args: Array[String]): Unit = {
-    //val parsed = Parsers.parse(text)
-    val result = new Interpreter().run(prog)
+    val parsed = Parsers.parse(text)
+    assert(parsed == prog)
+    val result = new Interpreter().run(parsed)
 
     println(result.output.mkString)
   }
