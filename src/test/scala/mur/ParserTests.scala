@@ -34,6 +34,23 @@ class ParserTests extends FreeSpec with Matchers {
     "a sequence of ints" in {
       assert(Parsers.parseExpr("{1, 2}") == Sequence(Literal(1), Literal(2)))
     }
+    "map" ignore {
+      assert(Parsers.parseExpr("map({1, 10}, i -> 2 * i)") ==
+        MapSeq(
+          Sequence(Literal(1), Literal(10)),
+          Id("i"),
+          Mul(Literal(2), Id("i"))
+        )
+      )
+    }
+    "reduce" in {
+      assert(Parsers.parseExpr("reduce(sequence, 0, x y -> x + y)") ==
+        ReduceSeq(
+          Id("sequence"), Literal(0), Id("x"), Id("y"),
+          Plus(Id("x"), Id("y"))
+        )
+      )
+    }
   }
   "Parsing a complex expression of " - {
     " integers" in {

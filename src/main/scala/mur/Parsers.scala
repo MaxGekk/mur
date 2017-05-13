@@ -17,7 +17,7 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     case ("(" ~ e ~ ")") => Brackets(e)
   }
 
-  def operand = (num | brackets)
+  def operand = (num | brackets | id)
 
   def plus:Parser[Plus] = operand ~ "+" ~ operand ^^ {
     case (x ~ "+" ~ y) => Plus(x, y)
@@ -38,8 +38,17 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
   def sequence: Parser[Sequence] = "{" ~ expr ~ "," ~ expr ~ "}" ^^ {
     case ("{" ~ begin ~ "," ~ end ~ "}") => Sequence(begin, end)
   }
+  def map: Parser[MapSeq] = "map" ~ "(" ~ expr ~ "," ~ id ~ "->" ~ expr ~ ")" ^^ {
+    case ("map" ~ "(" ~ seq ~ "," ~ ident ~ "->" ~ e ~ ")") => MapSeq(seq, ident, e)
+  }
+  def reduce: Parser[ReduceSeq] = {
+    "reduce" ~ "(" ~ expr ~ "," ~ expr ~ "," ~ id ~ id ~ "->" ~ expr ~ ")" ^^ {
+      case ("reduce" ~ "(" ~ seq ~ "," ~ init ~ "," ~ x ~ y ~ "->" ~ e ~ ")") =>
+        ReduceSeq(seq, init, x, y, e)
+    }
+  }
 
-  def expr:Parser[Expr] = (op | num | brackets | id | sequence)
+  def expr:Parser[Expr] = (op | num | brackets | id | sequence | map | reduce)
 }
 
 object Parsers extends Parsers {
