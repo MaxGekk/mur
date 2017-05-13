@@ -16,8 +16,8 @@ object Main {
         Sequence(Literal(0), Id("n")),
         Id("i"),
         Div(
-          Pow(Literal(-1), Id("i")),
-          Plus(Mul(Literal(2), Id("i")), Literal(1))
+          Pow(Brackets(Literal(-1)), Id("i")),
+          Brackets(Plus(Mul(Literal(2), Id("i")), Literal(1)))
         )
       )
     ),
