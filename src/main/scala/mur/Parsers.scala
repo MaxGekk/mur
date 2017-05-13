@@ -2,12 +2,16 @@ package mur
 
 import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.CharSequenceReader
+import scala.util.parsing.combinator.JavaTokenParsers
 
-trait Parsers extends RegexParsers {
+trait Parsers extends RegexParsers with JavaTokenParsers {
 
   def integer: Parser[Literal] = """-?\d+""".r ^^ {
     s => Literal(s.toInt)
   }
+  def real: Parser[Literal] = floatingPointNumber ^^ { t => Literal(t.toDouble) }
+  def num: Parser[Literal] = real | integer
+
   def brackets = "(" ~> expr <~ ")"
 
   def operand = (integer | brackets)
@@ -15,20 +19,21 @@ trait Parsers extends RegexParsers {
   def plus:Parser[Plus] = operand ~ "+" ~ operand ^^ {
     case (x ~ "+" ~ y) => Plus(x, y)
   }
-
+  def minus:Parser[Minus] = operand ~ "-" ~ operand ^^ {
+    case (x ~ "-" ~ y) => Minus(x, y)
+  }
   def mul:Parser[Mul] = operand ~ "*" ~ operand ^^ {
     case (x ~ "*" ~ y) => Mul(x, y)
   }
-
   def div:Parser[Div] = operand ~ "/" ~ operand ^^ {
     case (x ~ "/" ~ y) => Div(x, y)
   }
-
   def pow:Parser[Pow] = operand ~ "^" ~ operand ^^ {
     case (x ~ "^" ~ y) => Pow(x, y)
   }
+  def op: Parser[Expr] = (plus | minus | mul | div | pow)
 
-  def expr:Parser[Expr] = (plus | mul | div | pow | integer | brackets)
+  def expr:Parser[Expr] = (op | num | brackets)
 }
 
 object Parsers extends Parsers {
