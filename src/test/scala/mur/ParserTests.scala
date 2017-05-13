@@ -25,6 +25,9 @@ class ParserTests extends FreeSpec with Matchers {
     "a simple pow" in {
       assert(Parsers.parseExpr("(-1) ^ 10") == Pow(Literal(-1), Literal(10)))
     }
+    "identifier" in {
+      assert(Parsers.parseExpr("abc123") == Id("abc123"))
+    }
   }
   "Parsing a complex expression of " - {
     " integers" in {

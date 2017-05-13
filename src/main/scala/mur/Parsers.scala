@@ -12,6 +12,8 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
   def real: Parser[Literal] = floatingPointNumber ^^ { t => Literal(t.toDouble) }
   def num: Parser[Literal] = real | integer
 
+  def id: Parser[Id] = ident ^^ { name => Id(name)}
+
   def brackets = "(" ~> expr <~ ")"
 
   def operand = (integer | brackets)
@@ -33,7 +35,7 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
   }
   def op: Parser[Expr] = (plus | minus | mul | div | pow)
 
-  def expr:Parser[Expr] = (op | num | brackets)
+  def expr:Parser[Expr] = (op | num | brackets | id)
 }
 
 object Parsers extends Parsers {
