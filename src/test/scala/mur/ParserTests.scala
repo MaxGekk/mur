@@ -42,12 +42,12 @@ class ParserTests extends FreeSpec with Matchers {
       )
     }
     "map" ignore {
-      assert(Parsers.parse("map({1, 10}, i -> 2 * i)") ==
-        MapSeq(
+      assert(Parsers.parse("out map({1, 10}, i -> 2 * i)") ==
+        Out(MapSeq(
           Sequence(Literal(1), Literal(10)),
           Id("i"),
           Mul(Literal(2), Id("i"))
-        )
+        ))
       )
     }
     "reduce" ignore {
@@ -60,7 +60,7 @@ class ParserTests extends FreeSpec with Matchers {
     }
   }
   "Parsing a complex expression of " - {
-    " integers" in {
+    " (2 * 3) * (4 + 5)" in {
 
       assert(Parsers.parse("out (2 * 3) * (4 + 5)") ==
         Out(Mul(
@@ -72,6 +72,15 @@ class ParserTests extends FreeSpec with Matchers {
             Literal(4),
             Literal(5)
           ))
+        ))
+      )
+    }
+    "1 + 2 * 3" in {
+
+      assert(Parsers.parse("out 1 + 2 * 3") ==
+        Out(Plus(
+          Literal(1),
+          Mul(Literal(2), Literal(3))
         ))
       )
     }

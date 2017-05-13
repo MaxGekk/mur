@@ -11,32 +11,19 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     Try{ Literal(s.toInt) }.recover { case _ => Literal(s.toDouble) }.get
   }
 
-  def id: Parser[Id] = ident ^^ { name => Id(name)}
+  def id: Parser[Id] = ident ^^ Id
 
-  def brackets: Parser[Brackets] = "(" ~ expr ~ ")" ^^ {
-    case ("(" ~ e ~ ")") => Brackets(e)
+  def brackets: Parser[Brackets] = "(" ~> expr <~ ")" ^^ {
+    case (e) => Brackets(e)
   }
 
   def operand = (num | brackets | id)
 
-  def plus:Parser[Plus] = operand ~ "+" ~ operand ^^ {
-    case (x ~ "+" ~ y) => Plus(x, y)
-  }
-  def minus:Parser[Minus] = operand ~ "-" ~ operand ^^ {
-    case (x ~ "-" ~ y) => Minus(x, y)
-  }
-  def mul:Parser[Mul] = operand ~ "*" ~ operand ^^ {
-    case (x ~ "*" ~ y) => Mul(x, y)
-  }
-  def div:Parser[Div] = operand ~ "/" ~ operand ^^ {
-    case (x ~ "/" ~ y) => Div(x, y)
-  }
-  def pow:Parser[Pow] = operand ~ "^" ~ operand ^^ {
-    case (x ~ "^" ~ y) => Pow(x, y)
-  }
-  def op: Parser[Expr] = (plus | minus | mul | div | pow)
-  def sequence: Parser[Sequence] = "{" ~ expr ~ "," ~ expr ~ "}" ^^ {
-    case ("{" ~ begin ~ "," ~ end ~ "}") => Sequence(begin, end)
+  def pow = chainl1(operand, "^" ^^^ Pow)
+  def term = chainl1(pow, "*" ^^^ Mul | "/" ^^^ Div)
+
+  def sequence: Parser[Sequence] = "{" ~> expr ~ "," ~ expr <~ "}" ^^ {
+    case (begin ~ "," ~ end) => Sequence(begin, end)
   }
   def map: Parser[MapSeq] = "map" ~ "(" ~ expr ~ "," ~ id ~ "->" ~ expr ~ ")" ^^ {
     case ("map" ~ "(" ~ seq ~ "," ~ ident ~ "->" ~ e ~ ")") => MapSeq(seq, ident, e)
@@ -47,8 +34,7 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
         ReduceSeq(seq, init, x, y, e)
     }
   }
-
-  def expr:Parser[Expr] = (op | num | brackets | id | sequence | map | reduce)
+  def expr = chainl1(term, "+" ^^^ Plus | "-" ^^^ Minus) | sequence | map | reduce
 
   def out: Parser[Out] = "out" ~ expr ^^ {
     case ("out" ~ e ) => Out(e)
