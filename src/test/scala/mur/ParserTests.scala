@@ -10,7 +10,7 @@ class ParserTests extends FreeSpec with Matchers {
     " double" in {
       assert(Parsers.parse("out 3.14") == Out(Literal(3.14)))
     }
-    " print" ignore {
+    " print" in {
       assert(Parsers.parse(""" print "Hello" """) == Print("Hello"))
     }
     "a simple sum" in {

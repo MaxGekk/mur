@@ -54,7 +54,7 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     case ("out" ~ e ) => Out(e)
   }
   def print: Parser[Print] = "print" ~ stringLiteral ^^ {
-    case ("print" ~ s) => Print(s)
+    case ("print" ~ s) => Print(s.substring(1, s.size - 1))
   }
   def vardef: Parser[VarDef] = "var" ~ ident ~ "=" ~ expr ^^ {
     case (_ ~ i ~ _ ~ e) => VarDef(i, e)
