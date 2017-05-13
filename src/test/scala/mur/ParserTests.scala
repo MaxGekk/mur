@@ -50,6 +50,29 @@ class ParserTests extends FreeSpec with Matchers {
         ))
       )
     }
+    "map over sequence" in {
+      assert(Parsers.parse("var sequence = map({0, n}, i -> (-1)^i / (2 * i + 1))") ==
+        VarDef("sequence",
+          MapSeq(
+            Sequence(Literal(0), Id("n")),
+            Id("i"),
+            Div(
+              Pow(Brackets(Literal(-1)), Id("i")),
+              Brackets(Plus(Mul(Literal(2), Id("i")), Literal(1)))
+            )
+          )
+        )
+      )
+    }
+    "reduce" in {
+      assert(Parsers.parse("var r = reduce(sequence, 0, x y -> x + y)") ==
+        VarDef("r", ReduceSeq(
+          Id("sequence"), Literal(0),
+          Id("x"), Id("y"),
+          Plus(Id("x"), Id("y"))
+        ))
+      )
+    }
   }
   "Parsing a complex expression of " - {
     " (2 * 3) * (4 + 5)" in {

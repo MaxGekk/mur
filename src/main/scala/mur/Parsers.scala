@@ -31,8 +31,13 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
   def map: Parser[MapSeq] = "map(" ~> expr ~ "," ~ ident ~ "->" ~ expr <~ ")" ^^ {
     case (s ~ _ ~ i ~ _ ~ e) => MapSeq(s, Id(i), e)
   }
+  def reduce: Parser[ReduceSeq] = {
+    "reduce(" ~> expr ~ "," ~ expr ~ "," ~ ident ~ ident ~ "->" ~ expr <~ ")" ^^ {
+      case (s ~ _ ~ ini ~ _ ~ x ~ y ~ _ ~ e) => ReduceSeq(s, ini, Id(x), Id(y), e)
+    }
+  }
 
-  def mrexpr = (map | expr)
+  def mrexpr = (map | reduce | expr)
 
   def out: Parser[Out] = "out" ~> mrexpr ^^ Out
   def print: Parser[Print] = "print" ~> stringLiteral ^^ {
