@@ -31,6 +31,9 @@ class ParserTests extends FreeSpec with Matchers {
     "identifier" in {
       assert(Parsers.parseExpr("abc123") == Id("abc123"))
     }
+    "a sequence of ints" in {
+      assert(Parsers.parseExpr("{1, 2}") == Sequence(Literal(1), Literal(2)))
+    }
   }
   "Parsing a complex expression of " - {
     " integers" in {

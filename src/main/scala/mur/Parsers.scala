@@ -35,8 +35,11 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     case (x ~ "^" ~ y) => Pow(x, y)
   }
   def op: Parser[Expr] = (plus | minus | mul | div | pow)
+  def sequence: Parser[Sequence] = "{" ~ expr ~ "," ~ expr ~ "}" ^^ {
+    case ("{" ~ begin ~ "," ~ end ~ "}") => Sequence(begin, end)
+  }
 
-  def expr:Parser[Expr] = (op | num | brackets | id)
+  def expr:Parser[Expr] = (op | num | brackets | id | sequence)
 }
 
 object Parsers extends Parsers {
