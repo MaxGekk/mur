@@ -1,22 +1,23 @@
 package mur
 
+import scala.util.Try
 import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.CharSequenceReader
 import scala.util.parsing.combinator.JavaTokenParsers
 
 trait Parsers extends RegexParsers with JavaTokenParsers {
 
-  def integer: Parser[Literal] = """-?\d+""".r ^^ {
-    s => Literal(s.toInt)
+  def num: Parser[Literal] = floatingPointNumber ^^ { s =>
+    Try{ Literal(s.toInt) }.recover { case _ => Literal(s.toDouble) }.get
   }
-  def real: Parser[Literal] = floatingPointNumber ^^ { t => Literal(t.toDouble) }
-  def num: Parser[Literal] = real | integer
 
   def id: Parser[Id] = ident ^^ { name => Id(name)}
 
-  def brackets = "(" ~> expr <~ ")"
+  def brackets: Parser[Brackets] = "(" ~ expr ~ ")" ^^ {
+    case ("(" ~ e ~ ")") => Brackets(e)
+  }
 
-  def operand = (integer | brackets)
+  def operand = (num | brackets)
 
   def plus:Parser[Plus] = operand ~ "+" ~ operand ^^ {
     case (x ~ "+" ~ y) => Plus(x, y)
