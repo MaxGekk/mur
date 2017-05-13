@@ -41,6 +41,15 @@ class ParserTests extends FreeSpec with Matchers {
         VarDef("sequence", Sequence(Literal(1), Literal(2)))
       )
     }
+    "map" in {
+      assert(Parsers.parse("var m = map({0, 10}, i -> i + 1)") ==
+        VarDef("m", MapSeq(
+          Sequence(Literal(0), Literal(10)),
+          Id("i"),
+          Plus(Id("i"), Literal(1))
+        ))
+      )
+    }
   }
   "Parsing a complex expression of " - {
     " (2 * 3) * (4 + 5)" in {
