@@ -33,6 +33,7 @@ object Main {
     Out(Id("pi"))
   ))
   def main(args: Array[String]): Unit = {
+    //val parsed = Parsers.parse(text)
     val result = new Interpreter().run(prog)
 
     println(result.output.mkString)
