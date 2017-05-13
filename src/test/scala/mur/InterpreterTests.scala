@@ -2,7 +2,7 @@ package mur
 
 import org.scalatest.{FreeSpec, Matchers}
 
-class InterpreterTests  extends FreeSpec with Matchers {
+class InterpreterTests extends FreeSpec with Matchers {
   "Print" - {
     "a string" in {
       val prog = Program(Seq(
