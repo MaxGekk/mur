@@ -36,11 +36,9 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
   }
   def expr = chainl1(term, "+" ^^^ Plus | "-" ^^^ Minus) | sequence | map | reduce
 
-  def out: Parser[Out] = "out" ~ expr ^^ {
-    case ("out" ~ e ) => Out(e)
-  }
-  def print: Parser[Print] = "print" ~ stringLiteral ^^ {
-    case ("print" ~ s) => Print(s.substring(1, s.size - 1))
+  def out: Parser[Out] = "out" ~> expr ^^ Out
+  def print: Parser[Print] = "print" ~> stringLiteral ^^ {
+    case (s) => Print(s.substring(1, s.size - 1))
   }
   def vardef: Parser[VarDef] = "var" ~ ident ~ "=" ~ expr ^^ {
     case (_ ~ i ~ _ ~ e) => VarDef(i, e)
