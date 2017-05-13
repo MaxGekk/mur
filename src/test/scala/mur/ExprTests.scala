@@ -2,7 +2,7 @@ package mur
 
 import org.scalatest.{FreeSpec, Matchers}
 
-class ExprTests  extends FreeSpec with Matchers {
+class ExprTests extends FreeSpec with Matchers {
   "Mapping of sequence of" - {
     " ints" in {
       val input = Sequence(Literal(0), Literal(3))
