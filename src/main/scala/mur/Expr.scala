@@ -23,10 +23,11 @@ sealed trait ExprValue
 case class Num(value: Int) extends ExprValue {
   override def toString: String = value.toString
 }
+case class NumSeq(seq: Seq[Int]) extends ExprValue
 case class Real(value: Double) extends ExprValue {
   override def toString: String = value.toString
 }
-case class NumRange(value: Range) extends ExprValue
+case class RealSeq(seq: Seq[Double]) extends ExprValue
 
 case class ExprResult(value: Option[ExprValue], error: Option[String] = None)
 
@@ -47,7 +48,7 @@ object Expr {
         (beginResult, endResult) match {
           case (ExprResult(Some(Num(bv)), None), ExprResult(Some(Num(ev)), None)) =>
             if (bv <= ev)
-              ExprResult(Some(NumRange(bv to ev)), None)
+              ExprResult(Some(NumSeq(bv to ev)), None)
             else
               ExprResult(None, Some(s"Wrong params of the sequence: ${bv}..${ev}"))
           case (error @ ExprResult(None, _), _) => error
@@ -146,5 +147,15 @@ object ExprValue {
     case (Real(lr), Real(rr)) => ExprResult(Some(Real(scala.math.pow(lr, rr))))
     case (_: Num | _: Real, _) => ExprResult(None, Some(s"Wrong right operand of '+': ${r.getClass.getName}"))
     case (_, _) => ExprResult(None, Some(s"Wrong left operand of '+': ${l.getClass.getName}"))
+  }
+
+  def append(seq: ExprValue, elem: ExprValue): ExprValue = {
+    (seq, elem) match {
+      case (s @ NumSeq(sn: Seq[Int]), Num(n)) => s.copy(sn :+ n)
+      case (s @ NumSeq(sn: Seq[Int]), Real(n)) => RealSeq(sn.map(_.toDouble) :+ n)
+      case (s @ RealSeq(sn: Seq[Double]), Num(n)) => s.copy(sn :+ n.toDouble)
+      case (s @ RealSeq(sn: Seq[Double]), Real(n)) => s.copy(sn :+ n)
+      case (_, _) => throw new NotImplementedError(s"seq = $seq elem = $elem")
+    }
   }
 }
