@@ -22,7 +22,7 @@ class ParserTests extends FreeSpec with Matchers {
     "minus of doubles" in {
       assert(Parsers.parse("out 2.78 - 3.14") == Out(Minus(Literal(2.78), Literal(3.14))))
     }
-    "a simple multiplication" ignore {
+    "a simple multiplication" in {
       assert(Parsers.parse("out 2 * 3") == Out(Mul(Literal(2), Literal(3))))
     }
     "a simple div" in {
@@ -39,23 +39,6 @@ class ParserTests extends FreeSpec with Matchers {
     "a sequence of ints" in {
       assert(Parsers.parse("var sequence = {1, 2}") ==
         VarDef("sequence", Sequence(Literal(1), Literal(2)))
-      )
-    }
-    "map" ignore {
-      assert(Parsers.parse("out map({1, 10}, i -> 2 * i)") ==
-        Out(MapSeq(
-          Sequence(Literal(1), Literal(10)),
-          Id("i"),
-          Mul(Literal(2), Id("i"))
-        ))
-      )
-    }
-    "reduce" ignore {
-      assert(Parsers.parse("reduce(sequence, 0, x y -> x + y)") ==
-        ReduceSeq(
-          Id("sequence"), Literal(0), Id("x"), Id("y"),
-          Plus(Id("x"), Id("y"))
-        )
       )
     }
   }
@@ -81,6 +64,24 @@ class ParserTests extends FreeSpec with Matchers {
         Out(Plus(
           Literal(1),
           Mul(Literal(2), Literal(3))
+        ))
+      )
+    }
+    "2 / 3 ^ 4" in {
+
+      assert(Parsers.parse("out 2 / 3 ^ 4") ==
+        Out(Div(
+          Literal(2),
+          Pow(Literal(3), Literal(4))
+        ))
+      )
+    }
+    "2 ^ 4 - 3 * 8" in {
+
+      assert(Parsers.parse("out 2 ^ 4 - 3 * 8") ==
+        Out(Minus(
+          Pow(Literal(2), Literal(4)),
+          Mul(Literal(3), Literal(8))
         ))
       )
     }
