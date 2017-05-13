@@ -49,15 +49,27 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
   }
 
   def expr:Parser[Expr] = (op | num | brackets | id | sequence | map | reduce)
+
+  def out: Parser[Out] = "out" ~ expr ^^ {
+    case ("out" ~ e ) => Out(e)
+  }
+  def print: Parser[Print] = "print" ~ stringLiteral ^^ {
+    case ("print" ~ s) => Print(s)
+  }
+  def vardef: Parser[VarDef] = "var" ~ ident ~ "=" ~ expr ^^ {
+    case (_ ~ i ~ _ ~ e) => VarDef(i, e)
+  }
+
+  def stmt: Parser[Stmt] = (out | print | vardef)
 }
 
 object Parsers extends Parsers {
 
-  def parseExpr(s: CharSequence): Expr = {
-    parseExpr(new CharSequenceReader(s))
+  def parse(s: CharSequence): Stmt = {
+    parse(new CharSequenceReader(s))
   }
 
-  def parseExpr(input: CharSequenceReader): Expr = {
+  def parse(input: CharSequenceReader): Stmt = {
     parsePhrase(input) match {
       case Success(t, _) => t
       case NoSuccess(msg, next) => throw new IllegalArgumentException(
@@ -65,7 +77,7 @@ object Parsers extends Parsers {
     }
   }
 
-  def parsePhrase(input: CharSequenceReader): ParseResult[Expr] = {
-    phrase(expr)(input)
+  def parsePhrase(input: CharSequenceReader): ParseResult[Stmt] = {
+    phrase(stmt)(input)
   }
 }

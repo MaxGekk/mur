@@ -5,37 +5,44 @@ import org.scalatest.{FreeSpec, Matchers}
 class ParserTests extends FreeSpec with Matchers {
   "Parsing of " - {
     " integer" in {
-      assert(Parsers.parseExpr("42") == Literal(42))
+      assert(Parsers.parse("var i = 42") == VarDef("i", Literal(42)))
     }
     " double" in {
-      assert(Parsers.parseExpr("3.14") == Literal(3.14))
+      assert(Parsers.parse("out 3.14") == Out(Literal(3.14)))
+    }
+    " print" ignore {
+      assert(Parsers.parse(""" print "Hello" """) == Print("Hello"))
     }
     "a simple sum" in {
-      assert(Parsers.parseExpr("2 + 3") == Plus(Literal(2), Literal(3)))
+      assert(Parsers.parse("var x = 2 + 3") == VarDef("x", Plus(Literal(2), Literal(3))))
     }
     "a simple minus of ints" in {
-      assert(Parsers.parseExpr("2 - 3") == Minus(Literal(2), Literal(3)))
+      assert(Parsers.parse("out 2 - 3") == Out(Minus(Literal(2), Literal(3))))
     }
     "minus of doubles" in {
-      assert(Parsers.parseExpr("2.78 - 3.14") == Minus(Literal(2.78), Literal(3.14)))
+      assert(Parsers.parse("out 2.78 - 3.14") == Out(Minus(Literal(2.78), Literal(3.14))))
     }
-    "a simple multiplication" in {
-      assert(Parsers.parseExpr("2 * 3") == Mul(Literal(2), Literal(3)))
+    "a simple multiplication" ignore {
+      assert(Parsers.parse("out 2 * 3") == Out(Mul(Literal(2), Literal(3))))
     }
     "a simple div" in {
-      assert(Parsers.parseExpr("-1 / 4") == Div(Literal(-1), Literal(4)))
+      assert(Parsers.parse("out -1 / 4") == Out(Div(Literal(-1), Literal(4))))
     }
     "a simple pow" in {
-      assert(Parsers.parseExpr("(-1) ^ 10") == Pow(Brackets(Literal(-1)), Literal(10)))
+      assert(Parsers.parse("var j = (-1) ^ 10") ==
+        VarDef("j", Pow(Brackets(Literal(-1)), Literal(10)))
+      )
     }
     "identifier" in {
-      assert(Parsers.parseExpr("abc123") == Id("abc123"))
+      assert(Parsers.parse("out abc123") == Out(Id("abc123")))
     }
     "a sequence of ints" in {
-      assert(Parsers.parseExpr("{1, 2}") == Sequence(Literal(1), Literal(2)))
+      assert(Parsers.parse("var sequence = {1, 2}") ==
+        VarDef("sequence", Sequence(Literal(1), Literal(2)))
+      )
     }
     "map" ignore {
-      assert(Parsers.parseExpr("map({1, 10}, i -> 2 * i)") ==
+      assert(Parsers.parse("map({1, 10}, i -> 2 * i)") ==
         MapSeq(
           Sequence(Literal(1), Literal(10)),
           Id("i"),
@@ -43,8 +50,8 @@ class ParserTests extends FreeSpec with Matchers {
         )
       )
     }
-    "reduce" in {
-      assert(Parsers.parseExpr("reduce(sequence, 0, x y -> x + y)") ==
+    "reduce" ignore {
+      assert(Parsers.parse("reduce(sequence, 0, x y -> x + y)") ==
         ReduceSeq(
           Id("sequence"), Literal(0), Id("x"), Id("y"),
           Plus(Id("x"), Id("y"))
@@ -55,8 +62,8 @@ class ParserTests extends FreeSpec with Matchers {
   "Parsing a complex expression of " - {
     " integers" in {
 
-      assert(Parsers.parseExpr("(2 * 3) * (4 + 5)") ==
-        Mul(
+      assert(Parsers.parse("out (2 * 3) * (4 + 5)") ==
+        Out(Mul(
           Brackets(Mul(
             Literal(2),
             Literal(3)
@@ -65,7 +72,7 @@ class ParserTests extends FreeSpec with Matchers {
             Literal(4),
             Literal(5)
           ))
-        )
+        ))
       )
     }
   }
