@@ -78,6 +78,7 @@ object Expr {
       case _: Literal => orig
       case br @ Brackets(expr) => br.copy(transform(expr, from, to))
       case id: Id if id == from => to
+      case _: Id => orig
       case seq @ Sequence(begin, end) =>
         seq.copy(transform(begin, from, to), transform(end, from, to))
       case plus @ Plus(left, right) =>

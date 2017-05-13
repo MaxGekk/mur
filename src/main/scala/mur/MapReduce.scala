@@ -19,8 +19,35 @@ object MapReduce {
     range match {
       case ExprResult(Some(NumSeq(seq)), _) => mapSeq(seq)
       case ExprResult(Some(RealSeq(seq)), _) => mapSeq(seq)
+      case ExprResult(Some(_), _) => ExprResult(None, Some(s"map works over sequences only: $range"))
       case error => error
     }
   }
-  def calc(map: ReduceSeq, ctx: Context): ExprResult = ???
+  def calc(reduce: ReduceSeq, ctx: Context): ExprResult = {
+    def reduceSeq(seq: Seq[AnyVal]): ExprResult = {
+      def reduceOp(x: AnyVal, y: AnyVal): ExprResult = {
+        val ex = Expr.transform(reduce.expr, reduce.x, Literal(x))
+        val ey = Expr.transform(ex, reduce.y, Literal(y))
+
+        Expr.calc(ey, ctx)
+      }
+      val init = Expr.calc(reduce.init, ctx)
+      seq.foldLeft(init) {
+        // Keep error and return it
+        case (error @ ExprResult(None, _), _) => error
+
+        case (ExprResult(Some(Num(n)), _), elem) => reduceOp(n, elem)
+        case (ExprResult(Some(Real(n)), _), elem) => reduceOp(n, elem)
+        case (ExprResult(Some(some), _), elem) =>
+          ExprResult(None, Some(s"reduce produces wrong type: ${some.getClass.getName}"))
+      }
+    }
+    val range = Expr.calc(reduce.seq, ctx)
+    range match {
+      case ExprResult(Some(NumSeq(seq)), _) => reduceSeq(seq)
+      case ExprResult(Some(RealSeq(seq)), _) => reduceSeq(seq)
+      case ExprResult(Some(_), _) => ExprResult(None, Some(s"reduce works over sequences only: $range"))
+      case error => error
+    }
+  }
 }

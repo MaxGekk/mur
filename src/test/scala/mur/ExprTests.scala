@@ -20,9 +20,18 @@ class ExprTests  extends FreeSpec with Matchers {
         )
       )
       val result = MapReduce.calc(expr, Context())
-      val expected: Seq[Double] = 0 to 3 map (i => Math.pow(-1, i)/(2*i + 1))
+      val expected: Seq[Double] = 0 to 3 map (i => Math.pow(-1, i) / (2 * i + 1))
 
       result shouldBe ExprResult(Some(RealSeq(expected)), None)
+    }
+  }
+  "Reducing of sequence of" - {
+    " ints" in {
+      val input = Sequence(Literal(0), Literal(3))
+      val expr = ReduceSeq(input, Literal(0), Id("x"), Id("y"), Plus(Id("x"), Id("y")))
+      val result = MapReduce.calc(expr, Context())
+
+      result shouldBe ExprResult(Some(Num(0 + 1 + 2 + 3)), None)
     }
   }
 }
