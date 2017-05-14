@@ -32,11 +32,16 @@ object Main {
     Print("pi = "),
     Out(Id("pi"))
   ))
-  def main(args: Array[String]): Unit = {
+
+  def getPi: String = {
     val parsed = Parsers.parse(text).get
     assert(parsed == prog)
     val result = new Interpreter().run(parsed)
 
-    println(result.output.mkString)
+    result.output.mkString
+  }
+
+  def main(args: Array[String]): Unit = {
+    println(getPi)
   }
 }
