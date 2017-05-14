@@ -60,6 +60,16 @@ class InterpreterTests extends FreeSpec with Matchers {
 
       result.output.mkString shouldBe "0.047619047619047616"
     }
+    "invalid expression" in {
+      val prog = Program(Seq(
+        Out(Literal('X'))
+      ))
+      val result = new Interpreter().run(prog)
+
+      result.error.isDefined shouldBe true
+      result.output.isEmpty shouldBe true
+
+    }
   }
   "Define variables" - {
     " and output its value" in {
@@ -70,6 +80,16 @@ class InterpreterTests extends FreeSpec with Matchers {
       val result = new Interpreter().run(prog)
 
       result.output.mkString shouldBe "500"
+    }
+    "invalid expression" in {
+      val prog = Program(Seq(
+        VarDef("n", Plus(Literal(0), Sequence(Literal(1), Literal(2))))
+      ))
+      val result = new Interpreter().run(prog)
+
+      result.error.isDefined shouldBe true
+      result.output.isEmpty shouldBe true
+
     }
   }
 }
