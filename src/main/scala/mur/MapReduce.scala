@@ -1,9 +1,11 @@
 package mur
 
+import scala.collection.parallel.ParSeq
+
 /** Calculating results of the map and reduce operations */
 object MapReduce {
   def calc(map: MapSeq, ctx: Context): ExprResult = {
-    def mapSeq(seq: Seq[AnyVal]): ExprResult = {
+    def mapSeq(seq: ParSeq[AnyVal]): ExprResult = {
       // Apply lambda expression (the last parameter) to each element of the sequence
       val res = seq.map(elem =>
         // Make a copy of map.expr, find the lambda parameter (map.x)
@@ -12,7 +14,7 @@ object MapReduce {
       )
       // Convert the sequence of expression results to one result by
       // collecting all values or getting the first error
-      res.foldLeft(ExprResult(Some(NumSeq(Seq())))) {
+      res.foldLeft(ExprResult(Some(NumSeq(ParSeq())))) {
         // Keep the first error and return it (ignore other values)
         case (error @ ExprResult(None, _), _) => error
         case (_, error @ ExprResult(None, _)) => error
@@ -34,7 +36,7 @@ object MapReduce {
   }
   // Reduce a sequence: reduce(seq, init, x y -> x + y)
   def calc(reduce: ReduceSeq, ctx: Context): ExprResult = {
-    def reduceSeq(seq: Seq[AnyVal]): ExprResult = {
+    def reduceSeq(seq: ParSeq[AnyVal]): ExprResult = {
       // Replace lambda parameters by sequence values. It makes a copy of
       // reduce.expr, finds the first reduce.x and second reduce.y lambda parameters,
       // and replaced it by the provided values

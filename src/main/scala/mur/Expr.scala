@@ -1,5 +1,7 @@
 package mur
 
+import scala.collection.parallel.ParSeq
+
 // Intermediate representation for expressions
 sealed trait Expr
 case class Literal(value: AnyVal) extends Expr // 10, 3.14
@@ -32,11 +34,11 @@ sealed trait ExprValue
 case class Num(value: Int) extends ExprValue {
   override def toString: String = value.toString
 }
-case class NumSeq(seq: Seq[Int]) extends ExprValue
+case class NumSeq(seq: ParSeq[Int]) extends ExprValue
 case class Real(value: Double) extends ExprValue {
   override def toString: String = value.toString
 }
-case class RealSeq(seq: Seq[Double]) extends ExprValue
+case class RealSeq(seq: ParSeq[Double]) extends ExprValue
 // Result of calculation of an expression: value or error
 case class ExprResult(value: Option[ExprValue], error: Option[String] = None)
 
@@ -58,7 +60,7 @@ object Expr {
         (beginResult, endResult) match {
           case (ExprResult(Some(Num(bv)), None), ExprResult(Some(Num(ev)), None)) =>
             if (bv <= ev) // Supported only ascending sequence of numbers
-              ExprResult(Some(NumSeq(bv to ev)), None)
+              ExprResult(Some(NumSeq(bv to ev par)), None)
             else
               ExprResult(None, Some(s"Wrong params of the sequence: ${bv}..${ev}"))
           case (error @ ExprResult(None, _), _) => error
@@ -165,10 +167,10 @@ object ExprValue {
 
   def append(seq: ExprValue, elem: ExprValue): ExprValue = {
     (seq, elem) match {
-      case (s @ NumSeq(sn: Seq[Int]), Num(n)) => s.copy(sn :+ n)
-      case (s @ NumSeq(sn: Seq[Int]), Real(n)) => RealSeq(sn.map(_.toDouble) :+ n)
-      case (s @ RealSeq(sn: Seq[Double]), Num(n)) => s.copy(sn :+ n.toDouble)
-      case (s @ RealSeq(sn: Seq[Double]), Real(n)) => s.copy(sn :+ n)
+      case (s @ NumSeq(sn: ParSeq[Int]), Num(n)) => s.copy(sn :+ n)
+      case (s @ NumSeq(sn: ParSeq[Int]), Real(n)) => RealSeq(sn.map(_.toDouble) :+ n)
+      case (s @ RealSeq(sn: ParSeq[Double]), Num(n)) => s.copy(sn :+ n.toDouble)
+      case (s @ RealSeq(sn: ParSeq[Double]), Real(n)) => s.copy(sn :+ n)
       case (_, _) => throw new NotImplementedError(s"seq = $seq elem = $elem")
     }
   }
