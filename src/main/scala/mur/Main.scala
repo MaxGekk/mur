@@ -33,7 +33,7 @@ object Main {
     Out(Id("pi"))
   ))
   def main(args: Array[String]): Unit = {
-    val parsed = Parsers.parse(text)
+    val parsed = Parsers.parse(text).get
     assert(parsed == prog)
     val result = new Interpreter().run(parsed)
 

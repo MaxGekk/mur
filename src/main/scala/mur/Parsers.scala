@@ -54,17 +54,8 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
 
 object Parsers extends Parsers {
 
-  def parse(s: CharSequence): Program = {
-    parse(new CharSequenceReader(s))
-  }
-
-  def parse(input: CharSequenceReader): Program = {
-    parsePhrase(input) match {
-      case Success(t, _) => t
-      case NoSuccess(msg, next) => throw new IllegalArgumentException(
-        "Could not parse '" + input + "' near '" + next.pos.longString + ": " + msg)
-    }
-  }
+  def parse(s: CharSequence): ParseResult[Program] = parse(new CharSequenceReader(s))
+  def parse(input: CharSequenceReader): ParseResult[Program] = parsePhrase(input)
 
   def parsePhrase(input: CharSequenceReader): ParseResult[Program] = {
     phrase(prog)(input)
