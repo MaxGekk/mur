@@ -19,7 +19,8 @@ object MapReduce {
     range match {
       case ExprResult(Some(NumSeq(seq)), _) => mapSeq(seq)
       case ExprResult(Some(RealSeq(seq)), _) => mapSeq(seq)
-      case ExprResult(Some(_), _) => ExprResult(None, Some(s"map works over sequences only: $range"))
+      case ExprResult(Some(unknown), _) =>
+        ExprResult(None, Some(s"map works over sequences only"))
       case error => error
     }
   }
@@ -46,7 +47,8 @@ object MapReduce {
     range match {
       case ExprResult(Some(NumSeq(seq)), _) => reduceSeq(seq)
       case ExprResult(Some(RealSeq(seq)), _) => reduceSeq(seq)
-      case ExprResult(Some(_), _) => ExprResult(None, Some(s"reduce works over sequences only: $range"))
+      case ExprResult(Some(_), _) =>
+        ExprResult(None, Some(s"reduce works over sequences only"))
       case error => error
     }
   }
