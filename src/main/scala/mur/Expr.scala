@@ -36,7 +36,7 @@ object Expr {
     expr match {
       case Literal(d: Double) => ExprResult(Some(Real(d)))
       case Literal(i: Int) => ExprResult(Some(Num(i)))
-      case Literal(v) => ExprResult(None, Some(s"invalid literal type (${v.getClass.getName})"))
+      case Literal(v) => ExprResult(None, Some(s"Invalid literal type (${v.getClass.getName})"))
       case Brackets(expr) => calc(expr, ctx)
       case Id(name) =>
         ctx.ids.get(name) match {
