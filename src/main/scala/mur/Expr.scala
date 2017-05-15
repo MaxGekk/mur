@@ -34,11 +34,15 @@ sealed trait ExprValue
 case class Num(value: Int) extends ExprValue {
   override def toString: String = value.toString
 }
-case class NumSeq(seq: ParSeq[Int]) extends ExprValue
+case class NumSeq(seq: ParSeq[Int]) extends ExprValue {
+  override def toString: String = seq.mkString("{",",","}")
+}
 case class Real(value: Double) extends ExprValue {
   override def toString: String = value.toString
 }
-case class RealSeq(seq: ParSeq[Double]) extends ExprValue
+case class RealSeq(seq: ParSeq[Double]) extends ExprValue {
+  override def toString: String = seq.mkString("{",",","}")
+}
 // Result of calculation of an expression: value or error
 case class ExprResult(value: Option[ExprValue], error: Option[String] = None)
 

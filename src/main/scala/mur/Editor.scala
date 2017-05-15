@@ -18,14 +18,18 @@ class Worker extends Actor {
 
   def receive = {
     case NewInput(text) =>
-      val outstr = Parsers.parse(text) match {
-        case Left(err) => "Parsing error: " + err
-        case Right(prog) =>
-          val result = interpreter.run(prog)
-          result match {
-            case Result(out, None) => out.mkString
-            case Result(_, Some(err)) => "Error: " + err
-          }
+      val outstr = try {
+        Parsers.parse(text) match {
+          case Left(err) => "Parsing error: " + err
+          case Right(prog) =>
+            val result = interpreter.run(prog)
+            result match {
+              case Result(out, None) => out.mkString
+              case Result(_, Some(err)) => "Error: " + err
+            }
+        }
+      } catch {
+        case e: Throwable => "Exception:" + e.toString
       }
       counter += 1
       Swing.onEDT{ Editor.output.append(s"[$counter] $outstr\n") }
