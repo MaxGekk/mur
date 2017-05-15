@@ -34,11 +34,17 @@ object Main {
   ))
 
   def getPi: String = {
-    val parsed = Parsers.parse(text).get
-    assert(parsed == prog)
-    val result = new Interpreter().run(parsed)
-
-    result.output.mkString
+    Parsers.parse(text) match {
+      case Left(err) => "Parsing error: " + err
+      case Right(parsed) if (parsed != prog) =>
+        s"Inncorect AST: actual = $parsed expected = $prog"
+      case Right(parsed) =>
+        val result = new Interpreter().run(parsed)
+        result match {
+          case Result(_, Some(err)) => "Interpretation error: " + err
+          case Result(out, _) => out.mkString
+        }
+    }
   }
 
   def main(args: Array[String]): Unit = {

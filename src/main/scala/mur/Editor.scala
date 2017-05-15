@@ -20,15 +20,14 @@ object Editor extends SimpleSwingApplication {
 
     val timerListener = new ActionListener {
       override def actionPerformed(actionEvent: ActionEvent) = {
-        val parsed = Parsers.parse(text.text)
-        if (parsed.successful) {
-          val result = interpreter.run(parsed.get)
-          if (!result.error.isEmpty) {
-            output.append("Error: " + result.error.get)
-          } else if (!result.output.isEmpty) {
-            output.append(result.output.mkString)
-          }
-          output.append("\n")
+        Parsers.parse(text.text) match {
+          case Left(err) => output.append("Parsing error: " + err + "\n")
+          case Right(prog) =>
+            val result = interpreter.run(prog)
+            result match {
+              case Result(out, None) => output.append(out.mkString + "\n")
+              case Result(_, Some(err)) => output.append("Error: " + err + "\n")
+            }
         }
       }
     }

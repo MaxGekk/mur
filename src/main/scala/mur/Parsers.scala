@@ -61,7 +61,12 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
 
 object Parsers extends Parsers {
 
-  def parse(s: CharSequence): ParseResult[Program] = parse(new CharSequenceReader(s))
+  def parse(s: CharSequence): Either[String, Program] = {
+    parse(new CharSequenceReader(s)) match {
+      case Success(res, _) => Right(res)
+      case NoSuccess(err, _) => Left(err)
+    }
+  }
   def parse(input: CharSequenceReader): ParseResult[Program] = parsePhrase(input)
 
   def parsePhrase(input: CharSequenceReader): ParseResult[Program] = {
