@@ -17,3 +17,6 @@ libraryDependencies ++= Seq(
   "org.scala-lang.modules" %% "scala-swing" % swingV,
   "com.typesafe.akka" %% "akka-actor" % akkaV
 )
+
+mainClass in assembly := Some("mur.Editor")
+assemblyJarName in assembly := "mur-editor.jar"

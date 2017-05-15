@@ -9,7 +9,18 @@ op ::= + | - | * | / | ^
 stmt ::= var identifier = expr | out expr | print "string"
 program ::= stmt | program stmt
 ```
+## Editor
+The following command creates jar file with MuR Editor:
+```
+$ sbt assembly
+[info] Packaging /Users/dev/proj/mur/target/scala-2.12/mur-editor.jar ...
+```
+To run the editor:
+```
+java -jar /Users/dev/proj/mur/target/scala-2.12/mur-editor.jar
+```
 
+## Tests
 Run the tests with enabled coverage:
 ```
 $ sbt clean coverage test
@@ -24,6 +35,7 @@ $ sbt coverageReport
 ```
 It creates the file with reports: target/scala-2.12/scoverage-report/index.htm
 
+## Example
 Parsing and interpretation of the example:
 ```
 var n = 500
