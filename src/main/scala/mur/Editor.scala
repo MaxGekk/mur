@@ -7,7 +7,7 @@ import scala.swing.event._
 
 object Editor extends SimpleSwingApplication {
   val text = new TextArea(Main.text)
-  val output = new TextArea("No errors")
+  val output = new TextArea("No errors\n")
   val interpreter = new Interpreter()
   def top = new MainFrame{
     title = "MuR Editor"
@@ -20,15 +20,15 @@ object Editor extends SimpleSwingApplication {
 
     val timerListener = new ActionListener {
       override def actionPerformed(actionEvent: ActionEvent) = {
-        output.append("\n>>>\n")
         val parsed = Parsers.parse(text.text)
         if (parsed.successful) {
           val result = interpreter.run(parsed.get)
-          if (!result.output.isEmpty) {
-            output.append("Output:\n")
-            output.append(result.output.mkString("\n"))
+          if (!result.error.isEmpty) {
+            output.append("Error: " + result.error.get)
+          } else if (!result.output.isEmpty) {
+            output.append(result.output.mkString)
           }
-          result.error.foreach("Error: " + output.append(_))
+          output.append("\n")
         }
       }
     }

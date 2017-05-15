@@ -23,7 +23,8 @@ class Interpreter {
         case Out(expr) =>
           val exprResult = Expr.calc(expr, ctx)
           exprResult match {
-            case ExprResult(Some(value), _) => (ctx, res.copy(output = res.output :+ value.toString))
+            case ExprResult(Some(value), _) =>
+              (ctx, res.copy(output = res.output :+ value.toString))
             case ExprResult(None, error) => (ctx, res.copy(error = error))
           }
         // Define new variable (override old one), get its value eagerly
