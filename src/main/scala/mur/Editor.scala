@@ -39,9 +39,9 @@ class Worker extends Actor {
 object Editor extends SimpleSwingApplication {
   val input = new TextArea(Main.text)
   val output = new TextArea("[0] No errors\n")
-  val system = ActorSystem("mur-editor")
+  val actorSystem = ActorSystem("mur-editor")
   val WORKERS_AMOUNT = 2
-  val workers = system.actorOf(
+  val workers = actorSystem.actorOf(
     props = SmallestMailboxPool(WORKERS_AMOUNT).
       withSupervisorStrategy(OneForOneStrategy(-1, Duration.Inf) { case _ => Restart }).
       withResizer(DefaultResizer(lowerBound = WORKERS_AMOUNT, upperBound = 2 * WORKERS_AMOUNT)).
@@ -49,7 +49,7 @@ object Editor extends SimpleSwingApplication {
     name = "worker"
   )
 
-  def top = new MainFrame{
+  def top = new MainFrame {
     title = "MuR Editor"
     preferredSize = new Dimension(500, 500)
     contents = new BoxPanel(Orientation.Vertical) {
@@ -68,5 +68,10 @@ object Editor extends SimpleSwingApplication {
     reactions += {
       case _: KeyTyped => timer.restart()
     }
+  }
+
+  override def shutdown(): Unit = {
+    actorSystem.stop(workers)
+    actorSystem.terminate()
   }
 }
