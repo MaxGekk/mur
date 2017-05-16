@@ -61,50 +61,6 @@ class ExprTests extends FreeSpec with Matchers {
       result.value shouldBe Some(Num(1 to 10 reduce(_ * _)))
     }
   }
-  "Transform expression " - {
-    "()" in {
-      val expr = Brackets(Id("x"))
-      val result = Expr.transform(expr, Id("x"), Literal(0))
-
-      result shouldBe Brackets(Literal(0))
-    }
-    "simple" in {
-      val expr = Minus(Id("x"), Literal(1))
-      val result = Expr.transform(expr, Id("x"), Literal(0))
-
-      result shouldBe Minus(Literal(0), Literal(1))
-    }
-    "map" in {
-      val expr = MapSeq(
-        Sequence(Literal(0), Id("a")),
-        Id("x"),
-        Pow(Id("a"), Id("x"))
-      )
-      val result = Expr.transform(expr, Id("a"), Literal(100))
-
-      result shouldBe MapSeq(
-        Sequence(Literal(0), Literal(100)),
-        Id("x"),
-        Pow(Literal(100), Id("x"))
-      )
-    }
-    "reduce" in {
-      val expr = ReduceSeq(
-        Sequence(Literal(0), Id("a")),
-        Literal(1),
-        Id("x"), Id("y"),
-        Plus(Mul(Id("a"), Id("x")), Mul(Id("a"), Id("x")))
-      )
-      val result = Expr.transform(expr, Id("a"), Literal(100))
-
-      result shouldBe ReduceSeq(
-        Sequence(Literal(0), Literal(100)),
-        Literal(1),
-        Id("x"), Id("y"),
-        Plus(Mul(Literal(100), Id("x")), Mul(Literal(100), Id("x")))
-      )
-    }
-  }
   "Calculate the expression with " - {
     "wrong literal" in {
       val expr = Literal('a')

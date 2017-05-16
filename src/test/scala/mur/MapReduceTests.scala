@@ -2,8 +2,6 @@ package mur
 
 import org.scalatest.{FreeSpec, Matchers}
 
-import scala.collection.parallel.ParSeq
-
 class MapReduceTests extends FreeSpec with Matchers {
   "Mapping of sequence of" - {
     " ints" in {
@@ -11,7 +9,7 @@ class MapReduceTests extends FreeSpec with Matchers {
       val expr = MapSeq(input, Id("x"), Mul(Id("x"), Literal(2)))
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(Some(NumSeq(ParSeq(0, 2, 4, 6))), None)
+      result shouldBe ExprResult(Some(NumSeq(Seq(0, 2, 4, 6))), None)
     }
     " ints to produce another sequence of reals" in {
       val input = Sequence(Literal(0), Literal(3))
@@ -22,7 +20,7 @@ class MapReduceTests extends FreeSpec with Matchers {
         )
       )
       val result = MapReduce.calc(expr, Context())
-      val expected: ParSeq[Double] = (0 to 3).par.map (i => Math.pow(-1, i) / (2 * i + 1))
+      val expected: Seq[Double] = (0 to 3).map (i => Math.pow(-1, i) / (2 * i + 1))
 
       result shouldBe ExprResult(Some(RealSeq(expected)), None)
     }
@@ -33,7 +31,7 @@ class MapReduceTests extends FreeSpec with Matchers {
 
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(Some(RealSeq(ParSeq(0.1592356687898089, 0.3184713375796178))), None)
+      result shouldBe ExprResult(Some(RealSeq(Seq(0.1592356687898089, 0.3184713375796178))), None)
     }
     " single int. An error message should be returned." in {
       val input = Literal(1)

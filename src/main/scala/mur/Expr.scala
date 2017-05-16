@@ -1,7 +1,5 @@
 package mur
 
-import scala.collection.parallel.ParSeq
-
 // Intermediate representation for expressions
 sealed trait Expr
 case class Literal(value: AnyVal) extends Expr // 10, 3.14
@@ -34,13 +32,13 @@ sealed trait ExprValue
 case class Num(value: Int) extends ExprValue {
   override def toString: String = value.toString
 }
-case class NumSeq(seq: ParSeq[Int]) extends ExprValue {
+case class NumSeq(seq: Seq[Int]) extends ExprValue {
   override def toString: String = seq.mkString("{",",","}")
 }
 case class Real(value: Double) extends ExprValue {
   override def toString: String = value.toString
 }
-case class RealSeq(seq: ParSeq[Double]) extends ExprValue {
+case class RealSeq(seq: Seq[Double]) extends ExprValue {
   override def toString: String = seq.mkString("{",",","}")
 }
 // Result of calculation of an expression: value or error
@@ -64,7 +62,7 @@ object Expr {
         (beginResult, endResult) match {
           case (ExprResult(Some(Num(bv)), None), ExprResult(Some(Num(ev)), None)) =>
             if (bv <= ev) // Supported only ascending sequence of numbers
-              ExprResult(Some(NumSeq(bv to ev par)), None)
+              ExprResult(Some(NumSeq(bv to ev)), None)
             else
               ExprResult(None, Some(s"Wrong params of the sequence: ${bv}..${ev}"))
           case (error @ ExprResult(None, _), _) => error
@@ -88,39 +86,6 @@ object Expr {
         }
       case map: MapSeq => MapReduce.calc(map, ctx)
       case reduce: ReduceSeq => MapReduce.calc(reduce, ctx)
-    }
-  }
-  // Create a new copy of the expression by replacing the given identifier
-  // by provided literal.
-  def transform(orig: Expr, from: Id, to: Literal): Expr = {
-    orig match {
-      case _: Literal => orig
-      case br @ Brackets(expr) => br.copy(transform(expr, from, to))
-      case id: Id if id == from => to
-      case _: Id => orig
-      case seq @ Sequence(begin, end) =>
-        seq.copy(transform(begin, from, to), transform(end, from, to))
-      case plus @ Plus(left, right) =>
-        plus.copy(transform(left, from, to), transform(right, from, to))
-      case minus @ Minus(left, right) =>
-        minus.copy(transform(left, from, to), transform(right, from, to))
-      case mul @ Mul(left, right) =>
-        mul.copy(transform(left, from, to), transform(right, from, to))
-      case div @ Div(left, right) =>
-        div.copy(transform(left, from, to), transform(right, from, to))
-      case pow @ Pow(left, right) =>
-        pow.copy(transform(left, from, to), transform(right, from, to))
-      case mapSeq: MapSeq =>
-        mapSeq.copy(
-          seq = transform(mapSeq.seq, from, to),
-          expr = transform(mapSeq.expr, from, to)
-        )
-      case reduceSeq: ReduceSeq =>
-        reduceSeq.copy(
-          seq = transform(reduceSeq.seq, from, to),
-          init = transform(reduceSeq.init, from, to),
-          expr = transform(reduceSeq.expr, from, to)
-        )
     }
   }
 }
@@ -171,10 +136,10 @@ object ExprValue {
 
   def append(seq: ExprValue, elem: ExprValue): ExprValue = {
     (seq, elem) match {
-      case (s @ NumSeq(sn: ParSeq[Int]), Num(n)) => s.copy(sn :+ n)
-      case (s @ NumSeq(sn: ParSeq[Int]), Real(n)) => RealSeq(sn.map(_.toDouble) :+ n)
-      case (s @ RealSeq(sn: ParSeq[Double]), Num(n)) => s.copy(sn :+ n.toDouble)
-      case (s @ RealSeq(sn: ParSeq[Double]), Real(n)) => s.copy(sn :+ n)
+      case (s @ NumSeq(sn: Seq[Int]), Num(n)) => s.copy(sn :+ n)
+      case (s @ NumSeq(sn: Seq[Int]), Real(n)) => RealSeq(sn.map(_.toDouble) :+ n)
+      case (s @ RealSeq(sn: Seq[Double]), Num(n)) => s.copy(sn :+ n.toDouble)
+      case (s @ RealSeq(sn: Seq[Double]), Real(n)) => s.copy(sn :+ n)
       case (_, _) => throw new NotImplementedError(s"seq = $seq elem = $elem")
     }
   }

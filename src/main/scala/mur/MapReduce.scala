@@ -1,20 +1,23 @@
 package mur
 
-import scala.collection.parallel.ParSeq
-
 /** Calculating results of the map and reduce operations */
 object MapReduce {
+  def toNumValue(x: AnyVal): ExprValue = {
+    if (x.isInstanceOf[Int]) Num(x.asInstanceOf[Int])
+    else Real(x.asInstanceOf[Double])
+  }
+
   def calc(map: MapSeq, ctx: Context): ExprResult = {
-    def mapSeq(seq: ParSeq[AnyVal]): ExprResult = {
+    def mapSeq(seq: Seq[AnyVal]): ExprResult = {
       // Apply lambda expression (the last parameter) to each element of the sequence
-      val res = seq.map(elem =>
-        // Make a copy of map.expr, find the lambda parameter (map.x)
-        // in map.expr and replace it by an element of the sequence
-        Expr.calc(Expr.transform(map.expr, map.x, Literal(elem)), ctx)
-      )
+      val ctxWithParam = ctx.copy()
+      val res = seq.map { elem =>
+        ctxWithParam.ids.put(map.x.name, toNumValue(elem))
+        Expr.calc(map.expr, ctxWithParam)
+      }
       // Convert the sequence of expression results to one result by
       // collecting all values or getting the first error
-      res.foldLeft(ExprResult(Some(NumSeq(ParSeq())))) {
+      res.foldLeft(ExprResult(Some(NumSeq(Seq())))) {
         // Keep the first error and return it (ignore other values)
         case (error @ ExprResult(None, _), _) => error
         case (_, error @ ExprResult(None, _)) => error
@@ -36,15 +39,13 @@ object MapReduce {
   }
   // Reduce a sequence: reduce(seq, init, x y -> x + y)
   def calc(reduce: ReduceSeq, ctx: Context): ExprResult = {
-    def reduceSeq(seq: ParSeq[AnyVal]): ExprResult = {
-      // Replace lambda parameters by sequence values. It makes a copy of
-      // reduce.expr, finds the first reduce.x and second reduce.y lambda parameters,
-      // and replaced it by the provided values
+    def reduceSeq(seq: Seq[AnyVal]): ExprResult = {
+      val ctxWithParams = ctx.copy()
       def reduceOp(x: AnyVal, y: AnyVal): ExprResult = {
-        val ex = Expr.transform(reduce.expr, reduce.x, Literal(x))
-        val ey = Expr.transform(ex, reduce.y, Literal(y))
+        ctxWithParams.ids.put(reduce.x.name, toNumValue(x))
+        ctxWithParams.ids.put(reduce.y.name, toNumValue(y))
 
-        Expr.calc(ey, ctx) // Just calculate the lambda: x y -> x + y
+        Expr.calc(reduce.expr, ctxWithParams)
       }
       // Materialise init (or neutral value) parameter
       val init = Expr.calc(reduce.init, ctx)

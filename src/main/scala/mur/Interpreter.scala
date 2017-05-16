@@ -1,6 +1,9 @@
 package mur
 
+import scala.collection.mutable
+
 /** Result of program interpretation
+ *
   * @param output - strings printed by the out and print statements
   * @param error - first occurred error
   * */
@@ -9,7 +12,7 @@ case class Result(output: Seq[String] = Seq(), error: Option[String] = None)
 /** Context keeps state of interpretation
   * @param ids - mapping identifiers to its values
   */
-case class Context(ids: Map[String, ExprValue] = Map())
+case class Context(ids: mutable.Map[String, ExprValue] = mutable.Map())
 
 class Interpreter {
   def run(prog: Program): Result = {
