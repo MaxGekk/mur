@@ -17,12 +17,12 @@ object MapReduce {
       }
       // Convert the sequence of expression results to one result by
       // collecting all values or getting the first error
-      res.foldLeft(ExprResult(Some(NumSeq(Seq())))) {
+      res.foldRight(ExprResult(Some(NumSeq(List())))) {
         // Keep the first error and return it (ignore other values)
         case (error @ ExprResult(None, _), _) => error
         case (_, error @ ExprResult(None, _)) => error
         // Marge values of all results to one result with the sequence as its value
-        case (ExprResult(Some(seq), _), ExprResult(Some(num), _)) =>
+        case (ExprResult(Some(num), _), ExprResult(Some(seq), _)) =>
           ExprResult(Some(ExprValue.append(seq, num)))
       }
     }

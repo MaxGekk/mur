@@ -32,13 +32,13 @@ sealed trait ExprValue
 case class Num(value: Int) extends ExprValue {
   override def toString: String = value.toString
 }
-case class NumSeq(seq: Seq[Int]) extends ExprValue {
+case class NumSeq(seq: List[Int]) extends ExprValue {
   override def toString: String = seq.mkString("{",",","}")
 }
 case class Real(value: Double) extends ExprValue {
   override def toString: String = value.toString
 }
-case class RealSeq(seq: Seq[Double]) extends ExprValue {
+case class RealSeq(seq: List[Double]) extends ExprValue {
   override def toString: String = seq.mkString("{",",","}")
 }
 // Result of calculation of an expression: value or error
@@ -62,7 +62,7 @@ object Expr {
         (beginResult, endResult) match {
           case (ExprResult(Some(Num(bv)), None), ExprResult(Some(Num(ev)), None)) =>
             if (bv <= ev) // Supported only ascending sequence of numbers
-              ExprResult(Some(NumSeq(bv to ev)), None)
+              ExprResult(Some(NumSeq(bv to ev toList)), None)
             else
               ExprResult(None, Some(s"Wrong params of the sequence: ${bv}..${ev}"))
           case (error @ ExprResult(None, _), _) => error
@@ -136,10 +136,10 @@ object ExprValue {
 
   def append(seq: ExprValue, elem: ExprValue): ExprValue = {
     (seq, elem) match {
-      case (s @ NumSeq(sn: Seq[Int]), Num(n)) => s.copy(sn :+ n)
-      case (s @ NumSeq(sn: Seq[Int]), Real(n)) => RealSeq(sn.map(_.toDouble) :+ n)
-      case (s @ RealSeq(sn: Seq[Double]), Num(n)) => s.copy(sn :+ n.toDouble)
-      case (s @ RealSeq(sn: Seq[Double]), Real(n)) => s.copy(sn :+ n)
+      case (s @ NumSeq(sn: List[Int]), Num(n)) => s.copy(n :: sn)
+      case (s @ NumSeq(sn: List[Int]), Real(n)) => RealSeq(n :: sn.map(_.toDouble))
+      case (s @ RealSeq(sn: List[Double]), Num(n)) => s.copy(n.toDouble :: sn)
+      case (s @ RealSeq(sn: List[Double]), Real(n)) => s.copy(n :: sn)
       case (_, _) => throw new NotImplementedError(s"seq = $seq elem = $elem")
     }
   }
