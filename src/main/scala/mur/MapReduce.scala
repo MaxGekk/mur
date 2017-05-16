@@ -8,7 +8,7 @@ object MapReduce {
   }
 
   def calc(map: MapSeq, ctx: Context): ExprResult = {
-    def mapSeq(seq: Seq[AnyVal]): ExprResult = {
+    def mapSeq(seq: List[AnyVal]): ExprResult = {
       // Apply lambda expression (the last parameter) to each element of the sequence
       val ctxWithParam = ctx.copy()
       val res = seq.map { elem =>
@@ -39,7 +39,7 @@ object MapReduce {
   }
   // Reduce a sequence: reduce(seq, init, x y -> x + y)
   def calc(reduce: ReduceSeq, ctx: Context): ExprResult = {
-    def reduceSeq(seq: Seq[AnyVal]): ExprResult = {
+    def reduceSeq(seq: List[AnyVal]): ExprResult = {
       val ctxWithParams = ctx.copy()
       def reduceOp(x: AnyVal, y: AnyVal): ExprResult = {
         ctxWithParams.ids.put(reduce.x.name, toNumValue(x))
