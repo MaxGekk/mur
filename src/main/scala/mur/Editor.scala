@@ -40,7 +40,7 @@ object Editor extends SimpleSwingApplication {
   val input = new TextArea(Main.text)
   val output = new TextArea("[0] No errors\n")
   val actorSystem = ActorSystem("mur-editor")
-  val WORKERS_AMOUNT = 2
+  val WORKERS_AMOUNT = 1
   val workers = actorSystem.actorOf(
     props = SmallestMailboxPool(WORKERS_AMOUNT).
       withSupervisorStrategy(OneForOneStrategy(-1, Duration.Inf) { case _ => Restart }).
