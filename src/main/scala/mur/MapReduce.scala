@@ -2,11 +2,6 @@ package mur
 
 /** Calculating results of the map and reduce operations */
 object MapReduce {
-  def toNumValue(x: AnyVal): ExprValue = {
-    if (x.isInstanceOf[Int]) Num(x.asInstanceOf[Int])
-    else Real(x.asInstanceOf[Double])
-  }
-
   def calc(map: MapSeq, ctx: Context): ExprResult = {
     def mapSeq(seq: List[AnyVal]): ExprResult = {
       // Apply lambda expression (the last parameter) to each element of the sequence
@@ -70,5 +65,10 @@ object MapReduce {
         ExprResult(None, Some(s"reduce works over sequences only"))
       case error => error
     }
+  }
+
+  def toNumValue(x: AnyVal): ExprValue = x match {
+    case i: Int => Num(i)
+    case d: Double => Real(d)
   }
 }
