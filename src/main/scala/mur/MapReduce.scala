@@ -1,6 +1,5 @@
 package mur
 
-import scala.annotation.tailrec
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -11,7 +10,7 @@ object MapReduce {
     val CHUNK_SIZE = 8096
 
     def mapSeq(seq: List[AnyVal]): ExprResult = {
-      def merge(results: Seq[ExprResult]): ExprResult = {
+      def merge(results: Iterable[ExprResult]): ExprResult = {
         results.foldRight(ExprResult(Some(NumSeq(List())))) {
           // Keep the first error and return it (ignore other values)
           case (error @ ExprResult(None, _), _) => error
@@ -21,25 +20,21 @@ object MapReduce {
             ExprResult(Some(ExprValue.append(s, num)))
         }
       }
-      @tailrec
-      def slice(xs: List[AnyVal], fs: List[Future[ExprResult]]): List[Future[ExprResult]] = {
-        if (xs.isEmpty) fs
-        else {
-          val (chunk, rest) = xs.splitAt(CHUNK_SIZE)
-          val ctxWithParam = ctx.copy()
-          val f = Future {
-            val res = chunk.map { elem =>
-              ctxWithParam.ids.put(map.x.name, toNumValue(elem))
-              Expr.calc(map.expr, ctxWithParam)
-            }
-            merge(res)
+
+      val sliced = seq
+        .sliding(CHUNK_SIZE, CHUNK_SIZE)
+        .map((_, ctx.copy(ids = ctx.ids.clone())))
+      val futures = sliced.map { case (chunk, context) =>
+        Future {
+          val res = chunk.map { elem =>
+            context.ids.put(map.x.name, toNumValue(elem))
+            Expr.calc(map.expr, context)
           }
-          slice(rest, f :: fs)
+          merge(res)
         }
       }
-
-      val futureRes = Future.sequence(slice(seq, List())).map(merge(_))
-      Await.result(futureRes, Duration.Inf)
+      val res = Await.result(Future.sequence(futures), Duration.Inf)
+      merge(res.toIterable)
     }
     // Materialisation of the first parameter - a sequence
     val range = Expr.calc(map.seq, ctx)
