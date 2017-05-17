@@ -140,7 +140,14 @@ object ExprValue {
       case (s @ NumSeq(sn: List[Int]), Real(n)) => RealSeq(n :: sn.map(_.toDouble))
       case (s @ RealSeq(sn: List[Double]), Num(n)) => s.copy(n.toDouble :: sn)
       case (s @ RealSeq(sn: List[Double]), Real(n)) => s.copy(n :: sn)
-      case (_, _) => throw new NotImplementedError(s"seq = $seq elem = $elem")
+      case (s @ NumSeq(sn: List[Int]), RealSeq(sr: List[Double])) =>
+        RealSeq(sn.map(_.toDouble) ++ sr)
+      case (s @ RealSeq(sr1: List[Double]), RealSeq(sr2: List[Double])) =>
+        s.copy(seq = sr1 ++ sr2)
+      case (s @ NumSeq(sn1: List[Int]), NumSeq(sn2: List[Int])) =>
+        s.copy(seq = sn1 ++ sn2)
+      case (_, _) =>
+        throw new NotImplementedError(s"seq = $seq (${seq.getClass.getName}) elem = $elem (${elem.getClass.getName})")
     }
   }
 }

@@ -1,25 +1,45 @@
 package mur
 
+import scala.annotation.tailrec
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
+import scala.concurrent.ExecutionContext.Implicits.global
+
 /** Calculating results of the map and reduce operations */
 object MapReduce {
   def calc(map: MapSeq, ctx: Context): ExprResult = {
+    val CHUNK_SIZE = 8096
+
     def mapSeq(seq: List[AnyVal]): ExprResult = {
-      // Apply lambda expression (the last parameter) to each element of the sequence
-      val ctxWithParam = ctx.copy()
-      val res = seq.map { elem =>
-        ctxWithParam.ids.put(map.x.name, toNumValue(elem))
-        Expr.calc(map.expr, ctxWithParam)
+      def merge(results: Seq[ExprResult]): ExprResult = {
+        results.foldRight(ExprResult(Some(NumSeq(List())))) {
+          // Keep the first error and return it (ignore other values)
+          case (error @ ExprResult(None, _), _) => error
+          case (_, error @ ExprResult(None, _)) => error
+          // Marge values of all results to one result with the sequence as its value
+          case (ExprResult(Some(num), _), ExprResult(Some(s), _)) =>
+            ExprResult(Some(ExprValue.append(s, num)))
+        }
       }
-      // Convert the sequence of expression results to one result by
-      // collecting all values or getting the first error
-      res.foldRight(ExprResult(Some(NumSeq(List())))) {
-        // Keep the first error and return it (ignore other values)
-        case (error @ ExprResult(None, _), _) => error
-        case (_, error @ ExprResult(None, _)) => error
-        // Marge values of all results to one result with the sequence as its value
-        case (ExprResult(Some(num), _), ExprResult(Some(seq), _)) =>
-          ExprResult(Some(ExprValue.append(seq, num)))
+      @tailrec
+      def slice(xs: List[AnyVal], fs: List[Future[ExprResult]]): List[Future[ExprResult]] = {
+        if (xs.isEmpty) fs
+        else {
+          val (chunk, rest) = xs.splitAt(CHUNK_SIZE)
+          val ctxWithParam = ctx.copy()
+          val f = Future {
+            val res = chunk.map { elem =>
+              ctxWithParam.ids.put(map.x.name, toNumValue(elem))
+              Expr.calc(map.expr, ctxWithParam)
+            }
+            merge(res)
+          }
+          slice(rest, f :: fs)
+        }
       }
+
+      val futureRes = Future.sequence(slice(seq, List())).map(merge(_))
+      Await.result(futureRes, Duration.Inf)
     }
     // Materialisation of the first parameter - a sequence
     val range = Expr.calc(map.seq, ctx)
