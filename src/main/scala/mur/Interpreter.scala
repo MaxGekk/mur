@@ -9,10 +9,18 @@ import scala.collection.mutable
   * */
 case class Result(output: Seq[String] = Seq(), error: Option[String] = None)
 
+/** Interpreter settings
+  * @param chunkSize - input for map/reduce is split by chunks.
+  *                  The parameter controls maximum size of such chunks */
+case class Settings(chunkSize: Int = 65536)
+
 /** Context keeps state of interpretation
   * @param ids - mapping identifiers to its values
   */
-case class Context(ids: mutable.Map[String, ExprValue] = mutable.Map())
+case class Context(
+                    ids: mutable.Map[String, ExprValue] = mutable.Map(),
+                    settings: Settings = Settings()
+                  )
 
 class Interpreter {
   def run(prog: Program): Result = {

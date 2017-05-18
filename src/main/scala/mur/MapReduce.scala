@@ -6,8 +6,6 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Calculating results of the map and reduce operations */
 object MapReduce {
-  val CHUNK_SIZE = 8192
-
   def calc(op: MapSeq, ctx: Context): ExprResult = {
     def map(vals: List[AnyVal]): ExprResult = {
       val sliced = slice(vals, ctx)
@@ -93,7 +91,7 @@ object MapReduce {
   }
 
   def slice(seq: List[AnyVal], ctx: Context) = {
-    seq.sliding(CHUNK_SIZE, CHUNK_SIZE)
+    seq.sliding(ctx.settings.chunkSize, ctx.settings.chunkSize)
        .map((_, ctx.copy(ids = ctx.ids.clone())))
   }
 
