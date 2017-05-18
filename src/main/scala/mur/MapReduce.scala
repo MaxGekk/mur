@@ -37,26 +37,32 @@ object MapReduce {
   // Reduce a sequence: reduce(seq, init, x y -> x + y)
   def calc(reduce: ReduceSeq, ctx: Context): ExprResult = {
     def reduceSeq(seq: List[AnyVal]): ExprResult = {
-      val ctxWithParams = ctx.copy()
-      def reduceOp(x: AnyVal, y: AnyVal): ExprResult = {
-        ctxWithParams.ids.put(reduce.x.name, toNumValue(x))
-        ctxWithParams.ids.put(reduce.y.name, toNumValue(y))
+      def reduceOp(x: AnyVal, y: AnyVal, context: Context): ExprResult = {
+        context.ids.put(reduce.x.name, toNumValue(x))
+        context.ids.put(reduce.y.name, toNumValue(y))
 
-        Expr.calc(reduce.expr, ctxWithParams)
+        Expr.calc(reduce.expr, context)
       }
       // Materialise init (or neutral value) parameter
       val init = Expr.calc(reduce.init, ctx)
-      // Iterate over the sequence staring from the init param and calculate
-      // the result by applying the lambda function.
-      seq.foldLeft(init) {
-        // Keep error and return it
-        case (error @ ExprResult(None, _), _) => error
+      val sliced = slice(seq, ctx)
+      val futures = sliced.map { case (chunk, context) =>
+        Future {
+          // Iterate over the sequence staring from the init param and calculate
+          // the result by applying the lambda function.
+          chunk.foldLeft(init) {
+            // Keep error and return it
+            case (error @ ExprResult(None, _), _) => error
 
-        case (ExprResult(Some(Num(n)), _), elem) => reduceOp(n, elem)
-        case (ExprResult(Some(Real(n)), _), elem) => reduceOp(n, elem)
-        case (ExprResult(Some(some), _), elem) =>
-          ExprResult(None, Some(s"reduce produces wrong type: ${some.getClass.getName}"))
+            case (ExprResult(Some(Num(n)), _), elem) => reduceOp(n, elem, context)
+            case (ExprResult(Some(Real(n)), _), elem) => reduceOp(n, elem, context)
+            case (ExprResult(Some(some), _), elem) =>
+              ExprResult(None, Some(s"reduce produces wrong type: ${some.getClass.getName}"))
+          }
+        }
       }
+      val res = Await.result(Future.sequence(futures), Duration.Inf)
+      merge(res.toIterable)
     }
     // Materialise the sequence - first parameter
     val range = Expr.calc(reduce.seq, ctx)
