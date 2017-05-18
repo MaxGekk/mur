@@ -64,7 +64,8 @@ object Parsers extends Parsers {
   def parse(s: CharSequence): Either[String, Program] = {
     parse(new CharSequenceReader(s)) match {
       case Success(res, _) => Right(res)
-      case NoSuccess(err, _) => Left(err)
+      case NoSuccess(msg, next) =>
+        Left(s"at line ${next.pos.line}, column ${next.pos.column}: " + msg)
     }
   }
   def parse(input: CharSequenceReader): ParseResult[Program] = parsePhrase(input)
