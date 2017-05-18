@@ -6,24 +6,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 /** Calculating results of the map and reduce operations */
 object MapReduce {
+  val CHUNK_SIZE = 8096
+
   def calc(map: MapSeq, ctx: Context): ExprResult = {
-    val CHUNK_SIZE = 8096
-
     def mapSeq(seq: List[AnyVal]): ExprResult = {
-      def merge(results: Iterable[ExprResult]): ExprResult = {
-        results.foldRight(ExprResult(Some(NumSeq(List())))) {
-          // Keep the first error and return it (ignore other values)
-          case (error @ ExprResult(None, _), _) => error
-          case (_, error @ ExprResult(None, _)) => error
-          // Marge values of all results to one result with the sequence as its value
-          case (ExprResult(Some(num), _), ExprResult(Some(s), _)) =>
-            ExprResult(Some(ExprValue.append(s, num)))
-        }
-      }
-
-      val sliced = seq
-        .sliding(CHUNK_SIZE, CHUNK_SIZE)
-        .map((_, ctx.copy(ids = ctx.ids.clone())))
+      val sliced = slice(seq, ctx)
       val futures = sliced.map { case (chunk, context) =>
         Future {
           val res = chunk.map { elem =>
@@ -80,6 +67,22 @@ object MapReduce {
         ExprResult(None, Some(s"reduce works over sequences only"))
       case error => error
     }
+  }
+
+  def merge(results: Iterable[ExprResult]): ExprResult = {
+    results.foldRight(ExprResult(Some(NumSeq(List())))) {
+      // Keep the first error and return it (ignore other values)
+      case (error @ ExprResult(None, _), _) => error
+      case (_, error @ ExprResult(None, _)) => error
+      // Marge values of all results to one result with the sequence as its value
+      case (ExprResult(Some(num), _), ExprResult(Some(s), _)) =>
+        ExprResult(Some(ExprValue.append(s, num)))
+    }
+  }
+
+  def slice(seq: List[AnyVal], ctx: Context) = {
+    seq.sliding(CHUNK_SIZE, CHUNK_SIZE)
+       .map((_, ctx.copy(ids = ctx.ids.clone())))
   }
 
   def toNumValue(x: AnyVal): ExprValue = x match {
