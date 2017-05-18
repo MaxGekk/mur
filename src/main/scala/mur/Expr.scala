@@ -32,21 +32,21 @@ sealed trait ExprValue {
   def isSingle: Boolean
   def isSeq: Boolean = !isSingle
 }
-sealed trait SingleValue[T] extends ExprValue {
-  val value: T
+sealed trait SingleValue extends ExprValue {
+  val value: AnyVal
   def isSingle: Boolean = true
   override def toString: String = value.toString
 }
-case class Num(value: Int) extends SingleValue[Int]
-case class Real(value: Double) extends SingleValue[Double]
+case class Num(value: Int) extends SingleValue
+case class Real(value: Double) extends SingleValue
 
-sealed trait SeqValue[T] extends ExprValue {
-  val seq: List[T]
+sealed trait SeqValue extends ExprValue {
+  val seq: List[AnyVal]
   def isSingle: Boolean = false
   override def toString: String = seq.mkString("{",",","}")
 }
-case class NumSeq(seq: List[Int]) extends SeqValue[Int]
-case class RealSeq(seq: List[Double]) extends SeqValue[Double]
+case class NumSeq(seq: List[Int]) extends SeqValue
+case class RealSeq(seq: List[Double]) extends SeqValue
 
 // Result of calculation of an expression: value or error
 case class ExprResult(value: Option[ExprValue], error: Option[String] = None)

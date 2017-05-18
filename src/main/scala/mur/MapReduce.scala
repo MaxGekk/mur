@@ -26,11 +26,10 @@ object MapReduce {
     // Materialisation of the first parameter - a sequence
     val range = Expr.calc(op.seq, ctx)
     range match {
-      // Extract sequence of integers or doubles
-      case ExprResult(Some(NumSeq(seq)), _) => map(seq)
-      case ExprResult(Some(RealSeq(seq)), _) => map(seq)
-      case ExprResult(Some(unknown), _) =>
+      case ExprResult(Some(value), _) if !value.isSeq =>
         ExprResult(None, Some(s"map works over sequences only"))
+      // Extract sequence of integers or doubles
+      case ExprResult(Some(s: SeqValue), _) => map(s.seq)
       case error => error
     }
   }
@@ -55,11 +54,10 @@ object MapReduce {
           chunk.foldLeft(init) {
             // Keep error and return it
             case (error @ ExprResult(None, _), _) => error
-
-            case (ExprResult(Some(Num(n)), _), elem) => applyLambda(n, elem, context)
-            case (ExprResult(Some(Real(n)), _), elem) => applyLambda(n, elem, context)
-            case (ExprResult(Some(some), _), elem) =>
-              ExprResult(None, Some(s"reduce produces wrong type: ${some.getClass.getName}"))
+            case (ExprResult(Some(value), _), _) if !value.isSingle =>
+              ExprResult(None, Some(s"reduce produces wrong type: ${value.getClass.getName}"))
+            case (ExprResult(Some(single: SingleValue), _), elem) =>
+              applyLambda(single.value, elem, context)
           }
         }
       }
@@ -67,17 +65,14 @@ object MapReduce {
       reduceRes(union(res.toIterable))
     }
     def reduceRes(results: ExprResult): ExprResult = results match {
-      case ExprResult(Some(NumSeq(seq)), _) if seq.isEmpty => init
-      case ExprResult(Some(NumSeq(seq)), _) if seq.length == 1 =>
-        ExprResult(Some(Num(seq.head)))
-      case ExprResult(Some(NumSeq(seq)), _) => reduce(seq)
-
-      case ExprResult(Some(RealSeq(seq)), _) if seq.isEmpty => init
-      case ExprResult(Some(RealSeq(seq)), _) if seq.length == 1 =>
-        ExprResult(Some(Real(seq.head)))
-      case ExprResult(Some(RealSeq(seq)), _) => reduce(seq)
-      case ExprResult(Some(_), _) =>
+      case ExprResult(Some(value), _) if !value.isSeq =>
         ExprResult(None, Some(s"reduce works over sequences only"))
+
+      case ExprResult(Some(s: SeqValue), _) if s.seq.isEmpty => init
+      case ExprResult(Some(s: SeqValue), _) if s.seq.length == 1 =>
+        ExprResult(Some(toNumValue(s.seq.head)))
+      case ExprResult(Some(s: SeqValue), _) => reduce(s.seq)
+
       case error => error
     }
 
