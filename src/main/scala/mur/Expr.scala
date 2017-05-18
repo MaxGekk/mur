@@ -28,19 +28,26 @@ case class ReduceSeq(seq: Expr, init: Expr, x: Id, y: Id, expr: Expr) extends Ex
 // A value of a calculated expression. Support 2 kind of values:
 // - single value - Num (integer) or Real (double)
 // - sequence of single values - NumSeq and RealSeq
-sealed trait ExprValue
-case class Num(value: Int) extends ExprValue {
+sealed trait ExprValue {
+  def isSingle: Boolean
+  def isSeq: Boolean = !isSingle
+}
+sealed trait SingleValue[T] extends ExprValue {
+  val value: T
+  def isSingle: Boolean = true
   override def toString: String = value.toString
 }
-case class NumSeq(seq: List[Int]) extends ExprValue {
+case class Num(value: Int) extends SingleValue[Int]
+case class Real(value: Double) extends SingleValue[Double]
+
+sealed trait SeqValue[T] extends ExprValue {
+  val seq: List[T]
+  def isSingle: Boolean = false
   override def toString: String = seq.mkString("{",",","}")
 }
-case class Real(value: Double) extends ExprValue {
-  override def toString: String = value.toString
-}
-case class RealSeq(seq: List[Double]) extends ExprValue {
-  override def toString: String = seq.mkString("{",",","}")
-}
+case class NumSeq(seq: List[Int]) extends SeqValue[Int]
+case class RealSeq(seq: List[Double]) extends SeqValue[Double]
+
 // Result of calculation of an expression: value or error
 case class ExprResult(value: Option[ExprValue], error: Option[String] = None)
 
