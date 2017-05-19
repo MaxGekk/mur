@@ -19,7 +19,8 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     case (e) => Brackets(e)
   }
   // Operands of arithmetic operations: ^, *, /, +, -
-  def operand = (map | reduce | num | brackets | id)
+  def operand = (map | reduce | num | brackets | id
+    | "" ~> failure("expected operands: map, reduce, number, (), identifier"))
 
   def pow = chainl1(operand, "^" ^^^ Pow)
   def term = chainl1(pow, "*" ^^^ Mul | "/" ^^^ Div)
@@ -29,7 +30,9 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     case (begin ~ "," ~ end) => Sequence(begin, end)
   }
 
-  def expr = chainl1(term, "+" ^^^ Plus | "-" ^^^ Minus) | sequence
+  def expr = (chainl1(term, "+" ^^^ Plus | "-" ^^^ Minus) | sequence
+    | "" ~> failure("incorrect expression"))
+
   // Parser of the map operator: map({0, n}, i -> i + 1)
   def map: Parser[MapSeq] = "map(" ~> expr ~ "," ~ ident ~ "->" ~ expr <~ ")" ^^ {
     case (s ~ _ ~ i ~ _ ~ e) => MapSeq(s, Id(i), e)
@@ -41,7 +44,8 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     }
   }
   // All expressions that can be parser and calculated
-  def mrexpr = (map | reduce | expr)
+  def mrexpr = (map | reduce | expr
+    | "" ~> failure("expected map/reduce or an expression"))
   // Parser for output of any expression: out 1 + 2*3
   def out: Parser[Out] = "out" ~> mrexpr ^^ Out
   // Parser of print. stringLiteral recognises a string with ""
@@ -54,7 +58,8 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
     case (_ ~ i ~ _ ~ e) => VarDef(i, e)
   }
 
-  def stmt: Parser[Stmt] = (out | print | vardef)
+  def stmt: Parser[Stmt] = (out | print | vardef
+    | "" ~> failure("expected statements: out, print or var"))
   // Program is just repeated statements
   def prog = rep(stmt) ^^ {Program(_)}
 }
