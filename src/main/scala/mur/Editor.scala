@@ -32,7 +32,7 @@ class Worker extends Actor {
         case e: Throwable => "Exception:" + e.toString
       }
       counter += 1
-      Swing.onEDT{ Editor.output.append(s"[$counter] $outstr\n") }
+      Swing.onEDT{ Editor.output.peer.setText(s"[$counter] $outstr\n") }
   }
 }
 
