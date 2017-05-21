@@ -97,7 +97,7 @@ object Expr {
   }
 
   def error(ctx: Context, msg: String): ExprResult = {
-    ExprResult(None, Some(Error(msg = msg)))
+    ExprResult(None, Some(Error(line = ctx.line, msg = msg)))
   }
 }
 

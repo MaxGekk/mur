@@ -5,10 +5,10 @@ import scala.collection.mutable
 /** Error description */
 case class Error(line: Int = -1, column: Int = -1, msg: String = "No error") {
   override def toString: String = {
-    val prefix = if (line != -1) {
-      if (column == -1) s"at [${line}] " else s"at [${line}:$column] "
+    val suffix = if (line != -1) {
+      if (column == -1) s" at line = ${line}" else s" at line=${line}, column=$column]"
     } else ""
-    prefix ++ msg
+    msg ++ suffix
   }
 }
 
@@ -26,17 +26,22 @@ case class Settings(chunkSize: Int = 65536)
 
 /** Context keeps state of interpretation
   * @param ids - mapping identifiers to its values
+  * @param line - currently processing line. Starting from 0
   */
 case class Context(
                     ids: mutable.Map[String, ExprValue] = mutable.Map(),
-                    settings: Settings = Settings()
+                    settings: Settings = Settings(),
+                    var line: Int = -1
                   )
 
 class Interpreter {
   def run(prog: Program): Result = {
     // Iterates over program statements one-by-one and execute them
-    val (_, result) = prog.stmts.foldLeft((Context(), Result())) { case (acc, stmt) =>
+    val init = (Context(), Result())
+    val (_, result) = prog.stmts.zipWithIndex.foldLeft(init) { case (acc, (stmt, line)) =>
       val (ctx, res) = acc
+      ctx.line = line
+
       stmt match {
         // Print a string like : print "Hello, World!"
         case Print(str) => (ctx, res.copy(output = res.output :+ str))
