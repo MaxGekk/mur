@@ -3,6 +3,7 @@ package mur
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
+import Expr.error
 
 /** Calculating results of the map and reduce operations */
 object MapReduce {
@@ -25,7 +26,7 @@ object MapReduce {
     val range = Expr.calc(op.seq, ctx)
     range match {
       case ExprResult(Some(value), _) if !value.isSeq =>
-        ExprResult(None, Some(s"map works over sequences only"))
+        error(ctx, s"map works over sequences only")
       // Extract sequence of integers or doubles
       case ExprResult(Some(s: SeqValue), _) => map(s.seq)
       case error => error
@@ -53,7 +54,7 @@ object MapReduce {
             // Keep error and return it
             case (error @ ExprResult(None, _), _) => error
             case (ExprResult(Some(value), _), _) if !value.isSingle =>
-              ExprResult(None, Some(s"reduce produces wrong type: ${value.getClass.getName}"))
+              error(ctx, s"reduce produces wrong type: ${value.getClass.getName}")
             case (ExprResult(Some(single: SingleValue), _), elem) =>
               applyLambda(single.value, elem, context)
           }
@@ -64,7 +65,7 @@ object MapReduce {
     }
     def reduceRes(results: ExprResult): ExprResult = results match {
       case ExprResult(Some(value), _) if !value.isSeq =>
-        ExprResult(None, Some(s"reduce works over sequences only"))
+        error(ctx, s"reduce works over sequences only")
 
       case ExprResult(Some(s: SeqValue), _) if s.seq.isEmpty => init
       case ExprResult(Some(s: SeqValue), _) if s.seq.length == 1 =>

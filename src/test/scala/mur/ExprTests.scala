@@ -66,105 +66,105 @@ class ExprTests extends FreeSpec with Matchers {
       val expr = Literal('a')
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Invalid literal type (java.lang.Character)")
+      result.error.get.msg shouldBe "Invalid literal type (java.lang.Character)"
       result.value shouldBe None
     }
     "undefined identifier" in {
       val expr = Id("X")
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Identifier X is not defined")
+      result.error.get.msg shouldBe "Identifier X is not defined"
       result.value shouldBe None
     }
     "wrong sequence" in {
       val expr = Sequence(Literal(10), Literal(0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong params of the sequence: 10..0")
+      result.error.get.msg shouldBe "Wrong params of the sequence: 10..0"
       result.value shouldBe None
     }
     "wrong plus operands - left" in {
       val expr = Plus(Sequence(Literal(2), Literal(3)), Literal(2.0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong left operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong left operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong plus operands - right" in {
       val expr = Plus(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong right operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong right operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong minus operands - left" in {
       val expr = Minus(Sequence(Literal(2), Literal(3)), Literal(2.0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong left operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong left operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong minus operands - right" in {
       val expr = Minus(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong right operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong right operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong mul operands - left" in {
       val expr = Mul(Sequence(Literal(2), Literal(3)), Literal(2.0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong left operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong left operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong mul operands - right" in {
       val expr = Mul(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong right operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong right operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong div operands - left" in {
       val expr = Div(Sequence(Literal(2), Literal(3)), Literal(2.0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong left operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong left operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong div operands - right" in {
       val expr = Div(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong right operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong right operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "div zero - int" in {
       val expr = Div(Literal(2.0), Literal(0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Division by zero")
+      result.error.get.msg shouldBe "Division by zero"
       result.value shouldBe None
     }
     "div zero - real" in {
       val expr = Div(Literal(2.0), Literal(0.0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Division by zero")
+      result.error.get.msg shouldBe "Division by zero"
       result.value shouldBe None
     }
     "wrong pow operands - left" in {
       val expr = Pow(Sequence(Literal(2), Literal(3)), Literal(2.0))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong left operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong left operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
     "wrong pow operands - right" in {
       val expr = Pow(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
-      result.error shouldBe Some("Wrong right operand of '+': mur.NumSeq")
+      result.error.get.msg shouldBe "Wrong right operand of '+': mur.NumSeq"
       result.value shouldBe None
     }
   }

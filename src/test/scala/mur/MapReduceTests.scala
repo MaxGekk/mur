@@ -39,7 +39,7 @@ class MapReduceTests extends FreeSpec with Matchers {
 
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(None, Some("map works over sequences only"))
+      result.error.get.msg shouldBe "map works over sequences only"
     }
   }
   "Reducing of sequence of" - {
@@ -63,14 +63,14 @@ class MapReduceTests extends FreeSpec with Matchers {
       val expr = ReduceSeq(input, Literal(1.0), Id("x"), Id("y"), Mul(Id("x"), Id("y")))
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(None, Some("reduce works over sequences only"))
+      result.error.get.msg shouldBe "reduce works over sequences only"
     }
     " sequence but produce not numbers" in {
       val input = Sequence(Literal(0), Literal(1))
       val expr = ReduceSeq(input, Literal(1.0), Id("x"), Id("y"), Sequence(Literal(0), Literal(1)))
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(None, Some("reduce produces wrong type: mur.NumSeq"))
+      result.error.get.msg shouldBe "reduce produces wrong type: mur.NumSeq"
     }
   }
 }

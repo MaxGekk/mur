@@ -2,12 +2,22 @@ package mur
 
 import scala.collection.mutable
 
+/** Error description */
+case class Error(line: Int = -1, column: Int = -1, msg: String = "No error") {
+  override def toString: String = {
+    val prefix = if (line != -1) {
+      if (column == -1) s"at [${line}] " else s"at [${line}:$column] "
+    } else ""
+    prefix ++ msg
+  }
+}
+
 /** Result of program interpretation
  *
   * @param output - strings printed by the out and print statements
   * @param error - first occurred error
   * */
-case class Result(output: Seq[String] = Seq(), error: Option[String] = None)
+case class Result(output: Seq[String] = Seq(), error: Option[Error] = None)
 
 /** Interpreter settings
   * @param chunkSize - input for map/reduce is split by chunks.
