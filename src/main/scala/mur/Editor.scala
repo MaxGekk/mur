@@ -25,7 +25,7 @@ class Worker extends Actor {
             val result = interpreter.run(prog)
             result match {
               case Result(out, None) => (out.mkString, None)
-              case Result(_, Some(err)) => ("Error: " + err, None)
+              case Result(_, Some(err)) => ("Error: " + err, Some(err))
             }
         }
       } catch {

@@ -40,7 +40,7 @@ class Interpreter {
     val init = (Context(), Result())
     val (_, result) = prog.stmts.zipWithIndex.foldLeft(init) { case (acc, (stmt, line)) =>
       val (ctx, res) = acc
-      ctx.line = line
+      ctx.line = stmt.pos.line
 
       stmt match {
         // Print a string like : print "Hello, World!"
@@ -51,7 +51,8 @@ class Interpreter {
           exprResult match {
             case ExprResult(Some(value), _) =>
               (ctx, res.copy(output = res.output :+ value.toString))
-            case ExprResult(None, error) => (ctx, res.copy(error = error))
+            case ExprResult(None, error) if res.error.isEmpty => (ctx, res.copy(error = error))
+            case _ => (ctx, res)
           }
         // Define new variable (override old one), get its value eagerly
         // and keep it in the context
@@ -59,7 +60,8 @@ class Interpreter {
           val exprResult = Expr.calc(expr, ctx)
           exprResult match {
             case ExprResult(Some(value), _) => (ctx.copy(ids = ctx.ids.updated(id, value)), res)
-            case ExprResult(None, error) => (ctx, res.copy(error = error))
+            case ExprResult(None, error) if res.error.isEmpty => (ctx, res.copy(error = error))
+            case _ => (ctx, res)
           }
       }
     }
