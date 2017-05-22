@@ -1,7 +1,9 @@
 package mur
 
+import scala.util.parsing.input.Positional
+
 // Intermediate representation for expressions
-sealed trait Expr
+sealed trait Expr extends Positional
 case class Literal(value: AnyVal) extends Expr // 10, 3.14
 case class Brackets(expr: Expr) extends Expr   // ()
 case class Id(name: String) extends Expr // identifer - a string like abc123

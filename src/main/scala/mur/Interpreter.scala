@@ -6,7 +6,7 @@ import scala.collection.mutable
 case class Error(line: Int = -1, column: Int = -1, msg: String = "No error") {
   override def toString: String = {
     val suffix = if (line != -1) {
-      if (column == -1) s" at line = ${line}" else s" at line=${line}, column=$column]"
+      if (column == -1) s" at line = ${line}" else s" at line=${line}, column=$column"
     } else ""
     msg ++ suffix
   }

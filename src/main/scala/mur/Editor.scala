@@ -18,21 +18,36 @@ class Worker extends Actor {
 
   def receive = {
     case NewInput(text) =>
-      val outstr = try {
+      val (outstr, error: Option[mur.Error]) = try {
         Parsers.parse(text) match {
-          case Left(err) => "Parsing error: " + err
+          case Left(err) => ("Parsing error: " + err, Some(err))
           case Right(prog) =>
             val result = interpreter.run(prog)
             result match {
-              case Result(out, None) => out.mkString
-              case Result(_, Some(err)) => "Error: " + err
+              case Result(out, None) => (out.mkString, None)
+              case Result(_, Some(err)) => ("Error: " + err, None)
             }
         }
       } catch {
         case e: Throwable => "Exception:" + e.toString
       }
       counter += 1
-      Swing.onEDT{ Editor.output.peer.setText(s"[$counter] $outstr\n") }
+      Swing.onEDT{
+        Editor.output.peer.setText(s"[$counter] $outstr\n")
+
+        val highlighter = Editor.input.peer.getHighlighter()
+        highlighter.removeAllHighlights()
+        error foreach { e =>
+          import javax.swing.text.DefaultHighlighter
+          import java.awt.Color
+          val painter = new DefaultHighlighter.DefaultHighlightPainter(Color.ORANGE)
+          highlighter.addHighlight(
+            Editor.input.peer.getLineStartOffset(e.line - 1),
+            Editor.input.peer.getLineEndOffset(e.line - 1),
+            painter
+          )
+        }
+      }
   }
 }
 
@@ -60,7 +75,7 @@ object Editor extends SimpleSwingApplication {
 
     val timerListener = new ActionListener {
       override def actionPerformed(actionEvent: ActionEvent) = {
-        workers ! NewInput(input.text)
+        workers ! NewInput(input.peer.getText)
       }
     }
     val timer = new javax.swing.Timer(1000, timerListener)

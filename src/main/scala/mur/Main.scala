@@ -2,13 +2,12 @@ package mur
 
 object Main {
   val text =
-    """
-      |var n = 500
-      |var sequence = map({0, n}, i -> (-1)^i / (2 * i + 1))
-      |var pi = 4 * reduce(sequence, 0, x y -> x + y)
-      |print "pi = "
-      |out pi
-    """.stripMargin
+    """|var n = 500
+       |var sequence = map({0, n}, i -> (-1)^i / (2 * i + 1))
+       |var pi = 4 * reduce(sequence, 0, x y -> x + y)
+       |print "pi = "
+       |out pi""".stripMargin
+
   val prog = Program(Seq(
     VarDef("n", Literal(500)),
     VarDef("sequence",
