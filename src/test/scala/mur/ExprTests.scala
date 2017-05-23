@@ -74,7 +74,7 @@ class ExprTests extends FreeSpec with Matchers {
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong params of the sequence: 10..0"
+      result.left.get.msg shouldBe "wrong params of the sequence. It should be 10 <= 0"
     }
     "wrong plus operands - left" in {
       val expr = Plus(Sequence(Literal(2), Literal(3)), Literal(2.0))

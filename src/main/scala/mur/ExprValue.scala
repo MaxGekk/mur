@@ -71,9 +71,29 @@ sealed trait SeqValue extends ExprValue {
   val seq: List[AnyVal]
   def isSingle: Boolean = false
   override def toString: String = seq.mkString("{",",","}")
+  def ::(seq: SingleValue): SeqValue
+  def ++(seq: SeqValue): SeqValue
 }
-case class NumSeq(seq: List[Int]) extends SeqValue
-case class RealSeq(seq: List[Double]) extends SeqValue
+case class NumSeq(seq: List[Int]) extends SeqValue {
+  def ::(single: SingleValue): SeqValue = single match {
+    case n: Num => this.copy(n.value :: seq)
+    case r: Real => RealSeq(r.value :: seq.map(_.toDouble))
+  }
+  def ++(other: SeqValue): SeqValue = other match {
+    case ns: NumSeq => this.copy(seq ++ ns.seq)
+    case rs: RealSeq => RealSeq(seq.map(_.toDouble) ++ rs.seq)
+  }
+}
+case class RealSeq(seq: List[Double]) extends SeqValue {
+  def ::(single: SingleValue): SeqValue = single match {
+    case n: Num => this.copy(n.value.toDouble :: seq)
+    case r: Real => this.copy(r.value :: seq)
+  }
+  def ++(other: SeqValue): SeqValue = other match {
+    case ns: NumSeq => this.copy(seq ++ ns.seq.map(_.toDouble))
+    case rs: RealSeq => RealSeq(seq ++ rs.seq)
+  }
+}
 
 object ExprValue {
   import Expr.error
@@ -109,21 +129,10 @@ object ExprValue {
     case (_, _) => error(ctx, s"wrong left operand of '^': ${l.getClass.getName}")
   }
 
-  def append(seq: ExprValue, elem: ExprValue): ExprValue = {
-    (seq, elem) match {
-      case (s @ NumSeq(sn: List[Int]), Num(n)) => s.copy(n :: sn)
-      case (s @ NumSeq(sn: List[Int]), Real(n)) => RealSeq(n :: sn.map(_.toDouble))
-      case (s @ RealSeq(sn: List[Double]), Num(n)) => s.copy(n.toDouble :: sn)
-      case (s @ RealSeq(sn: List[Double]), Real(n)) => s.copy(n :: sn)
-      case (s @ NumSeq(sn: List[Int]), RealSeq(sr: List[Double])) =>
-        RealSeq(sn.map(_.toDouble) ++ sr)
-      case (s @ RealSeq(sr1: List[Double]), RealSeq(sr2: List[Double])) =>
-        s.copy(seq = sr1 ++ sr2)
-      case (s @ NumSeq(sn1: List[Int]), NumSeq(sn2: List[Int])) =>
-        s.copy(seq = sn1 ++ sn2)
-      case (_, _) =>
-        throw new NotImplementedError(s"seq = $seq (${seq.getClass.getName}) elem = $elem (${elem.getClass.getName})")
-    }
+  def append(seq: ExprValue, elem: ExprValue): ExprValue = (seq, elem) match {
+    case (s: SeqValue, el: SingleValue) => el :: s
+    case (s1: SeqValue, s2: SeqValue) => s1 ++ s2
+    case (_, _) => throw new NotImplementedError(s"seq = $seq (${seq.getClass.getName}) elem = $elem (${elem.getClass.getName})")
   }
 
   def single(x: AnyVal): ExprValue = {

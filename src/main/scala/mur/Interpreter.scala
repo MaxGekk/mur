@@ -1,7 +1,6 @@
 package mur
 
 import com.typesafe.config.ConfigFactory
-
 import scala.collection.mutable
 
 /** Error description */

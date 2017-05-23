@@ -9,7 +9,7 @@ import ExprValue.single
 /** Calculating results of the map and reduce operations */
 object MapReduce {
   def calc(op: MapSeq, ctx: Context): Expr.Result = {
-    def map(vals: List[AnyVal]): Expr.Result = {
+    def mapValues(vals: List[AnyVal]): Expr.Result = {
       val sliced = slice(vals, ctx)
       val futures = sliced.map { case (chunk, context) =>
         Future {
@@ -28,7 +28,7 @@ object MapReduce {
     range match {
       case Right(value) if !value.isSeq => error(ctx, s"map works over sequences only")
       // Extract sequence of integers or doubles
-      case Right(s: SeqValue) => map(s.seq)
+      case Right(value: SeqValue) => mapValues(value.seq)
       case error => error
     }
   }
@@ -37,7 +37,7 @@ object MapReduce {
   def calc(op: ReduceSeq, ctx: Context): Expr.Result = {
     val init = Expr.calc(op.init, ctx)
 
-    def reduce(vals: List[AnyVal]): Expr.Result = {
+    def reduceValues(vals: List[AnyVal]): Expr.Result = {
       def applyLambda(x: AnyVal, y: AnyVal, context: Context) = {
         context.ids.put(op.x.name, single(x))
         context.ids.put(op.y.name, single(y))
@@ -60,19 +60,19 @@ object MapReduce {
         }
       }
       val res = Await.result(Future.sequence(futures), Duration.Inf)
-      reduceRes(union(res.toIterable))
+      reduceResults(union(res.toIterable))
     }
-    def reduceRes(results: Expr.Result) = results match {
+    def reduceResults(results: Expr.Result) = results match {
       case Right(value) if !value.isSeq => error(ctx, s"reduce works over sequences only")
       case Right(s: SeqValue) if s.seq.isEmpty => init
       case Right(s: SeqValue) if s.seq.length == 1 => Right(single(s.seq.head))
-      case Right(s: SeqValue) => reduce(s.seq)
+      case Right(s: SeqValue) => reduceValues(s.seq)
       case error => error
     }
 
     // Materialise the sequence - first parameter
     val range = Expr.calc(op.seq, ctx)
-    reduceRes(range)
+    reduceResults(range)
   }
 
   def union(results: Iterable[Expr.Result]): Expr.Result = {

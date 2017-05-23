@@ -6,7 +6,7 @@ import scala.util.parsing.input.Positional
 sealed trait Expr extends Positional
 case class Literal(value: AnyVal) extends Expr // 10, 3.14
 case class Brackets(expr: Expr) extends Expr   // ()
-case class Id(name: String) extends Expr // identifer - a string like abc123
+case class Id(name: String) extends Expr // identifier - a string like abc123
 case class Sequence(begin: Expr, end: Expr) extends Expr // {1, 100}
 
 // Arithmetic operator like +,-,*,/,^. Example: 1 + 2
@@ -23,7 +23,7 @@ case class Pow(left: Expr, right: Expr) extends Op   // 2 ^ 8
 // Applying a lambda function to each element of a sequence:
 // map(sequence, x -> x + 1)
 case class MapSeq(seq: Expr, x: Id, expr: Expr) extends Expr
-// Reducing a suquence by applying of a lambda function:
+// Reducing a sequence by applying of a lambda function:
 // reduce(sequence, init, x y -> x + y)
 case class ReduceSeq(seq: Expr, init: Expr, x: Id, y: Id, expr: Expr) extends Expr
 
@@ -44,15 +44,15 @@ object Expr {
           case None => error(ctx, s"identifier `$name` is not defined")
           case Some(value) => Right(value)
         }
-      case Sequence(begin, end) =>
+      case seq: Sequence =>
         // Materialise begin and end of the expression. Supported only Nums
-        val (beginResult, endResult) = (calc(begin, ctx), calc(end, ctx))
-        (beginResult, endResult) match {
+        val (begin, end) = (calc(seq.begin, ctx), calc(seq.end, ctx))
+        (begin, end) match {
           case (Right(Num(bv)), Right(Num(ev))) =>
             if (bv <= ev) // Supported only ascending sequence of numbers
               Right(NumSeq(bv to ev toList))
             else
-              error(ctx, s"wrong params of the sequence: ${bv}..${ev}")
+              error(ctx, s"wrong params of the sequence. It should be ${bv} <= ${ev}")
           case (error @ Left(_), _) => error
           case (_, error @ Left(_)) => error
           case (_, _) => error(ctx, s"wrong type of sequence begin or/and end")
@@ -60,8 +60,8 @@ object Expr {
       case op: Op =>
         // Materialisation of left operand and after that right operand even if
         // the left operand is invalid.
-        val (leftValue, rightValue) = (calc(op.left, ctx), calc(op.right, ctx))
-        (leftValue, rightValue) match {
+        val (left, right) = (calc(op.left, ctx), calc(op.right, ctx))
+        (left, right) match {
           case (error @ Left(_), _) => error
           case (_, error @ Left(_)) => error
           case (Right(lvalue), Right(rvalue)) =>
