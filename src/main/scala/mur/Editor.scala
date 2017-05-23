@@ -16,8 +16,8 @@ object Editor extends SimpleSwingApplication {
   def top = new MainFrame {
     title = "MuR Editor"
     preferredSize = new Dimension(
-      config.getInt("gui.window-height"),
-      config.getInt("gui.window-width")
+      config.getInt("gui.window-width"),
+      config.getInt("gui.window-height")
     )
     contents = new BoxPanel(Orientation.Vertical) {
       contents += new ScrollPane(input)
