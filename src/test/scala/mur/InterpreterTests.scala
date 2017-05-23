@@ -8,14 +8,14 @@ class InterpreterTests extends FreeSpec with Matchers {
       val prog = Program(Seq(
         Print("pi=")
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.error shouldBe None
       result.output.mkString shouldBe "pi="
     }
     "multiple strings" in {
       val prog = Program(Seq(Print("Hello,"), Print(" World"), Print("!")))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.output.mkString shouldBe "Hello, World!"
     }
@@ -25,7 +25,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       val prog = Program(Seq(
         Out(Literal(10))
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.output.mkString shouldBe "10"
     }
@@ -33,7 +33,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       val prog = Program(Seq(
         Out(Literal(1.0))
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.output.mkString shouldBe "1.0"
     }
@@ -41,7 +41,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       val prog = Program(Seq(
         Out(Brackets(Literal(42)))
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.output.mkString shouldBe "42"
     }
@@ -56,7 +56,7 @@ class InterpreterTests extends FreeSpec with Matchers {
           )
         )
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.output.mkString shouldBe "0.047619047619047616"
     }
@@ -64,7 +64,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       val prog = Program(Seq(
         Out(Literal('X'))
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.error.isDefined shouldBe true
       result.output.isEmpty shouldBe true
@@ -77,7 +77,7 @@ class InterpreterTests extends FreeSpec with Matchers {
         VarDef("n", Literal(500)),
         Out(Id("n"))
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.output.mkString shouldBe "500"
     }
@@ -85,7 +85,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       val prog = Program(Seq(
         VarDef("n", Plus(Literal(0), Sequence(Literal(1), Literal(2))))
       ))
-      val result = new Interpreter().run(prog)
+      val result = Interpreter.run(prog)
 
       result.error.isDefined shouldBe true
       result.output.isEmpty shouldBe true

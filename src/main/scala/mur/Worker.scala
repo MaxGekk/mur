@@ -12,7 +12,6 @@ import scala.swing.Swing
 case class NewInput(text: String)
 
 class Worker extends Actor {
-  val interpreter = new Interpreter()
   var counter = 0L
 
   def receive = {
@@ -21,7 +20,7 @@ class Worker extends Actor {
         Parsers.parse(text) match {
           case Left(err) => ("Parsing error: " + err, Some(err))
           case Right(prog) =>
-            val result = interpreter.run(prog)
+            val result = Interpreter.run(prog)
             result match {
               case Result(out, None) => (out.mkString, None)
               case Result(_, Some(err)) => ("Error: " + err, Some(err))

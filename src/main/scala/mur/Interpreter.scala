@@ -33,7 +33,7 @@ case class Context(
                     column: Int = 0
                   )
 
-class Interpreter {
+object Interpreter {
   def run(prog: Program): Result = {
     // Iterates over program statements one-by-one and execute them
     val init = (Context(), Result())

@@ -38,7 +38,7 @@ object Main {
       case Right(parsed) if (parsed != prog) =>
         s"Inncorect AST: actual = $parsed expected = $prog"
       case Right(parsed) =>
-        val result = new Interpreter().run(parsed)
+        val result = Interpreter.run(parsed)
         result match {
           case Result(_, Some(err)) => "Interpretation error: " + err
           case Result(out, _) => out.mkString
