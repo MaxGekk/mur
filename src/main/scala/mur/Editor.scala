@@ -5,6 +5,7 @@ import java.awt.event.{ActionEvent, ActionListener}
 import akka.actor.{Actor, ActorSystem, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy.Restart
 import akka.routing.{DefaultResizer, SmallestMailboxPool}
+import com.typesafe.config.ConfigFactory
 
 import scala.concurrent.duration.Duration
 import scala.swing._
@@ -56,21 +57,18 @@ class Worker extends Actor {
 }
 
 object Editor extends SimpleSwingApplication {
+  val config = ConfigFactory.load
   val input = new TextArea(Main.text)
   val output = new TextArea("[0] No errors\n")
   val actorSystem = ActorSystem("mur-editor")
-  val WORKERS_AMOUNT = 1
-  val workers = actorSystem.actorOf(
-    props = SmallestMailboxPool(WORKERS_AMOUNT).
-      withSupervisorStrategy(OneForOneStrategy(-1, Duration.Inf) { case _ => Restart }).
-      withResizer(DefaultResizer(lowerBound = WORKERS_AMOUNT, upperBound = 2 * WORKERS_AMOUNT)).
-      props(Props(classOf[Worker])),
-    name = "worker"
-  )
+  val workers = actorSystem.actorOf(props = workerSettings, name = "worker")
 
   def top = new MainFrame {
     title = "MuR Editor"
-    preferredSize = new Dimension(500, 500)
+    preferredSize = new Dimension(
+      config.getInt("gui.window-height"),
+      config.getInt("gui.window-width")
+    )
     contents = new BoxPanel(Orientation.Vertical) {
       contents += new ScrollPane(input)
       contents += new ScrollPane(output)
@@ -82,7 +80,7 @@ object Editor extends SimpleSwingApplication {
         workers ! NewInput(input.peer.getText)
       }
     }
-    val timer = new javax.swing.Timer(1000, timerListener)
+    val timer = new javax.swing.Timer(config.getInt("gui.processing-delay"), timerListener)
     timer.setRepeats(false)
     reactions += {
       case _: KeyTyped => timer.restart()
@@ -92,6 +90,18 @@ object Editor extends SimpleSwingApplication {
   override def shutdown(): Unit = {
     actorSystem.stop(workers)
     actorSystem.terminate()
+  }
+
+  def workerSettings = {
+    val WORKERS_AMOUNT = config.getInt("akka.workers-amount")
+
+    SmallestMailboxPool(WORKERS_AMOUNT).
+      withSupervisorStrategy(OneForOneStrategy(-1, Duration.Inf) { case _ => Restart }).
+      withResizer(DefaultResizer(
+        lowerBound = WORKERS_AMOUNT,
+        upperBound = WORKERS_AMOUNT
+      )).
+      props(Props(classOf[Worker]))
   }
 }
 
