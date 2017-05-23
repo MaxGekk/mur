@@ -125,6 +125,13 @@ object ExprValue {
         throw new NotImplementedError(s"seq = $seq (${seq.getClass.getName}) elem = $elem (${elem.getClass.getName})")
     }
   }
+
+  def single(x: AnyVal): ExprValue = {
+    if (x.isInstanceOf[Double])
+      Real(x.asInstanceOf[Double])
+    else
+      Num(x.asInstanceOf[Int])
+  }
 }
 
 

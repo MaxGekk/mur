@@ -4,6 +4,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import Expr.error
+import ExprValue.single
 
 /** Calculating results of the map and reduce operations */
 object MapReduce {
@@ -13,7 +14,7 @@ object MapReduce {
       val futures = sliced.map { case (chunk, context) =>
         Future {
           val res = chunk.map { elem =>
-            context.ids.put(op.x.name, toNumValue(elem))
+            context.ids.put(op.x.name, single(elem))
             Expr.calc(op.expr, context)
           }
           union(res)
@@ -25,8 +26,7 @@ object MapReduce {
     // Materialisation of the first parameter - a sequence
     val range = Expr.calc(op.seq, ctx)
     range match {
-      case Right(value) if !value.isSeq =>
-        error(ctx, s"map works over sequences only")
+      case Right(value) if !value.isSeq => error(ctx, s"map works over sequences only")
       // Extract sequence of integers or doubles
       case Right(s: SeqValue) => map(s.seq)
       case error => error
@@ -39,8 +39,8 @@ object MapReduce {
 
     def reduce(vals: List[AnyVal]): Expr.Result = {
       def applyLambda(x: AnyVal, y: AnyVal, context: Context) = {
-        context.ids.put(op.x.name, toNumValue(x))
-        context.ids.put(op.y.name, toNumValue(y))
+        context.ids.put(op.x.name, single(x))
+        context.ids.put(op.y.name, single(y))
 
         Expr.calc(op.expr, context)
       }
@@ -54,9 +54,8 @@ object MapReduce {
             // Keep error and return it
             case (error @ Left(_), _) => error
             case (Right(value), _) if !value.isSingle =>
-              error(ctx, s"reduce produces wrong type: ${value.getClass.getName}")
-            case (Right(single: SingleValue), elem) =>
-              applyLambda(single.value, elem, context)
+              error(ctx, s"lambda produces wrong type: ${value.getClass.getName}")
+            case (Right(single: SingleValue), elem) => applyLambda(single.value, elem, context)
           }
         }
       }
@@ -64,13 +63,10 @@ object MapReduce {
       reduceRes(union(res.toIterable))
     }
     def reduceRes(results: Expr.Result) = results match {
-      case Right(value) if !value.isSeq =>
-        error(ctx, s"reduce works over sequences only")
-
+      case Right(value) if !value.isSeq => error(ctx, s"reduce works over sequences only")
       case Right(s: SeqValue) if s.seq.isEmpty => init
-      case Right(s: SeqValue) if s.seq.length == 1 => Right(toNumValue(s.seq.head))
+      case Right(s: SeqValue) if s.seq.length == 1 => Right(single(s.seq.head))
       case Right(s: SeqValue) => reduce(s.seq)
-
       case error => error
     }
 
@@ -93,10 +89,5 @@ object MapReduce {
   def slice(seq: List[AnyVal], ctx: Context) = {
     seq.sliding(ctx.settings.chunkSize, ctx.settings.chunkSize)
        .map((_, ctx.copy(ids = ctx.ids.clone())))
-  }
-
-  def toNumValue(x: AnyVal): ExprValue = x match {
-    case i: Int => Num(i)
-    case d: Double => Real(d)
   }
 }
