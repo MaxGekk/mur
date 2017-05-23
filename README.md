@@ -1,5 +1,5 @@
-# mur
-mur is an interpreter and editor for simple MapReduce language. mur is just acronym for Map Und Reduce. 
+# MuR
+MuR is an interpreter and editor for simple MapReduce language. MuR is just acronym for Map Und Reduce. 
 
 The language has the following grammar:
 ```
@@ -25,7 +25,7 @@ Run the tests with enabled coverage:
 ```
 $ sbt clean coverage test
 ```
-To disable coverage directly in build, use:
+To enable/disable coverage directly in build, change this:
 ```
 coverageEnabled := false
 ```
@@ -51,3 +51,8 @@ $ sbt "run-main mur.Main"
 pi = 3.143588659585789
 [success] Total time: 1 s, completed May 14, 2017 6:21:27 PM
 ```
+
+# API
+There are two main methods:
+- Parsers.parse converts a program text to its intermediate representation (IR). IR is defined in IR.scala and Expr.scala
+- Interpreter.run takes an IR and executes it step-by-step, and produces a sequence of strings as a result of the out and print statements  

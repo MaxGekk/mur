@@ -31,6 +31,11 @@ case class Context(
 object Interpreter {
   type Result = Either[Error, Seq[String]]
 
+  /**
+    * Interpretation of an intermediate representation of a progmam
+    * @param prog - sequence of statements like print, out and var
+    * @return either output of the out and print statements nor an error
+    */
   def run(prog: Program): Result = {
     var ctx = Context()
     var result: Result = Right(Seq())

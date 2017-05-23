@@ -67,7 +67,11 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
 }
 
 object Parsers extends Parsers {
-
+  /**
+    * Parsing of a text of a program to its intermediate representation (IR)
+    * @param s - sequence of chars represented the program
+    * @return - either IR of the program nor an error
+    */
   def parse(s: CharSequence): Either[mur.Error, Program] = {
     parse(new CharSequenceReader(s)) match {
       case Success(res, _) => Right(res)
