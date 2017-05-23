@@ -54,7 +54,9 @@ case class RealSeq(seq: List[Double]) extends SeqValue
 case class ExprResult(value: Option[ExprValue], error: Option[Error] = None)
 
 object Expr {
-  def calc(expr: Expr, ctx: Context): ExprResult = {
+  def calc(expr: Expr, context: Context): ExprResult = {
+    val ctx = context.copy(line = expr.pos.line, column = expr.pos.column)
+
     expr match {
       case Literal(d: Double) => ExprResult(Some(Real(d)))
       case Literal(i: Int) => ExprResult(Some(Num(i)))
@@ -99,7 +101,7 @@ object Expr {
   }
 
   def error(ctx: Context, msg: String): ExprResult = {
-    ExprResult(None, Some(Error(line = ctx.line, msg = msg)))
+    ExprResult(None, Some(Error(msg = msg, line = ctx.line, column = ctx.column)))
   }
 }
 
