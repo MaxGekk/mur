@@ -95,42 +95,42 @@ class ExprTests extends FreeSpec with Matchers {
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong left operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong left operand of '-': mur.NumSeq"
     }
     "wrong minus operands - right" in {
       val expr = Minus(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong right operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong right operand of '-': mur.NumSeq"
     }
     "wrong mul operands - left" in {
       val expr = Mul(Sequence(Literal(2), Literal(3)), Literal(2.0))
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong left operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong left operand of '*': mur.NumSeq"
     }
     "wrong mul operands - right" in {
       val expr = Mul(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong right operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong right operand of '*': mur.NumSeq"
     }
     "wrong div operands - left" in {
       val expr = Div(Sequence(Literal(2), Literal(3)), Literal(2.0))
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong left operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong left operand of '/': mur.NumSeq"
     }
     "wrong div operands - right" in {
       val expr = Div(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong right operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong right operand of '/': mur.NumSeq"
     }
     "div zero - int" in {
       val expr = Div(Literal(2.0), Literal(0))
@@ -151,14 +151,14 @@ class ExprTests extends FreeSpec with Matchers {
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong left operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong left operand of '^': mur.NumSeq"
     }
     "wrong pow operands - right" in {
       val expr = Pow(Literal(2.0), Sequence(Literal(2), Literal(3)))
       val result = Expr.calc(expr, Context())
 
       result.isLeft shouldBe true
-      result.left.get.msg shouldBe "wrong right operand of '+': mur.NumSeq"
+      result.left.get.msg shouldBe "wrong right operand of '^': mur.NumSeq"
     }
   }
 }
