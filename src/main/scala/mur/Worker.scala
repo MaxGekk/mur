@@ -18,16 +18,16 @@ class Worker extends Actor {
     case NewInput(text) =>
       val (outstr, error) = try {
         Parsers.parse(text) match {
-          case Left(err) => ("Parsing error: " + err, Some(err))
+          case Left(err) => ("Parsing error " + err, Some(err))
           case Right(prog) =>
             val result = Interpreter.run(prog)
             result match {
               case Right(out) => (out.mkString, None)
-              case Left(err) => ("Error: " + err, Some(err))
+              case Left(err) => ("Error " + err, Some(err))
             }
         }
       } catch {
-        case e: Throwable => ("Exception:" + e.toString, None)
+        case e: Throwable => ("Exception: " + e.toString, None)
       }
       counter += 1
       Worker.output(counter, outstr, error)

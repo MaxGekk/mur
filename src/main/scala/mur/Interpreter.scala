@@ -6,10 +6,7 @@ import scala.collection.mutable
 
 /** Error description */
 case class Error(line: Int, column: Int, msg: String = "No error") {
-  override def toString: String = {
-    val suffix = s" at line=${line}, column=$column"
-    msg ++ suffix
-  }
+  override def toString: String = s"at [$line,$column]: $msg"
 }
 
 /** Interpreter settings
