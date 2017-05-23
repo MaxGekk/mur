@@ -1,5 +1,7 @@
 package mur
 
+import com.typesafe.config.ConfigFactory
+
 import scala.collection.mutable
 
 /** Error description */
@@ -13,7 +15,9 @@ case class Error(line: Int, column: Int, msg: String = "No error") {
 /** Interpreter settings
   * @param chunkSize - input for map/reduce is split by chunks.
   *                  The parameter controls maximum size of such chunks */
-case class Settings(chunkSize: Int = 65536)
+case class Settings(
+                     chunkSize: Int = ConfigFactory.load.getInt("map-reduce.chunk-size")
+                   )
 
 /** Context keeps state of interpretation
   * @param ids - mapping identifiers to its values
