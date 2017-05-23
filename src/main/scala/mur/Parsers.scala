@@ -35,13 +35,13 @@ trait Parsers extends RegexParsers with JavaTokenParsers {
 
   // Parser of the map operator: map({0, n}, i -> i + 1)
   def map: Parser[MapSeq] = positioned {
-    "map(" ~> expr ~ "," ~ ident ~ "->" ~ expr <~ ")" ^^ {
+    "map" ~> "(" ~> expr ~ "," ~ ident ~ "->" ~ expr <~ ")" ^^ {
       case (s ~ _ ~ i ~ _ ~ e) => MapSeq(s, Id(i), e)
     }
   }
   // Parser for the reduce operator: reduce({1, 10}, 0, i j -> i + j)
   def reduce: Parser[ReduceSeq] = positioned {
-    "reduce(" ~> expr ~ "," ~ expr ~ "," ~ ident ~ ident ~ "->" ~ expr <~ ")" ^^ {
+    "reduce" ~> "(" ~> expr ~ "," ~ expr ~ "," ~ ident ~ ident ~ "->" ~ expr <~ ")" ^^ {
       case (s ~ _ ~ ini ~ _ ~ x ~ y ~ _ ~ e) => ReduceSeq(s, ini, Id(x), Id(y), e)
     }
   }
