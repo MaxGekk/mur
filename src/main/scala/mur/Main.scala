@@ -40,8 +40,8 @@ object Main {
       case Right(parsed) =>
         val result = Interpreter.run(parsed)
         result match {
-          case Result(_, Some(err)) => "Interpretation error: " + err
-          case Result(out, _) => out.mkString
+          case Left(err) => "Interpretation error: " + err
+          case Right(out) => out.mkString
         }
     }
   }

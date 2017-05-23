@@ -10,14 +10,13 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.error shouldBe None
-      result.output.mkString shouldBe "pi="
+      result.right.get.mkString shouldBe "pi="
     }
     "multiple strings" in {
       val prog = Program(Seq(Print("Hello,"), Print(" World"), Print("!")))
       val result = Interpreter.run(prog)
 
-      result.output.mkString shouldBe "Hello, World!"
+      result.right.get.mkString shouldBe "Hello, World!"
     }
   }
   "Output" - {
@@ -27,7 +26,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.output.mkString shouldBe "10"
+      result.right.get.mkString shouldBe "10"
     }
     "an real" in {
       val prog = Program(Seq(
@@ -35,7 +34,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.output.mkString shouldBe "1.0"
+      result.right.get.mkString shouldBe "1.0"
     }
     "an integer in round brackets" in {
       val prog = Program(Seq(
@@ -43,7 +42,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.output.mkString shouldBe "42"
+      result.right.get.mkString shouldBe "42"
     }
     "a value of arithmetic expression" in {
       val prog = Program(Seq(
@@ -58,7 +57,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.output.mkString shouldBe "0.047619047619047616"
+      result.right.get.mkString shouldBe "0.047619047619047616"
     }
     "invalid expression" in {
       val prog = Program(Seq(
@@ -66,9 +65,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.error.isDefined shouldBe true
-      result.output.isEmpty shouldBe true
-
+      result.isLeft shouldBe true
     }
   }
   "Define variables" - {
@@ -79,7 +76,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.output.mkString shouldBe "500"
+      result.right.get.mkString shouldBe "500"
     }
     "invalid expression" in {
       val prog = Program(Seq(
@@ -87,9 +84,7 @@ class InterpreterTests extends FreeSpec with Matchers {
       ))
       val result = Interpreter.run(prog)
 
-      result.error.isDefined shouldBe true
-      result.output.isEmpty shouldBe true
-
+      result.isLeft shouldBe true
     }
   }
 }

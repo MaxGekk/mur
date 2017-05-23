@@ -9,7 +9,7 @@ class MapReduceTests extends FreeSpec with Matchers {
       val expr = MapSeq(input, Id("x"), Mul(Id("x"), Literal(2)))
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(Some(NumSeq(List(0, 2, 4, 6))), None)
+      result shouldBe Right(NumSeq(List(0, 2, 4, 6)))
     }
     " ints to produce another sequence of reals" in {
       val input = Sequence(Literal(0), Literal(3))
@@ -22,7 +22,7 @@ class MapReduceTests extends FreeSpec with Matchers {
       val result = MapReduce.calc(expr, Context())
       val expected: List[Double] = (0 to 3).map (i => Math.pow(-1, i) / (2 * i + 1)).toList
 
-      result shouldBe ExprResult(Some(RealSeq(expected)), None)
+      result shouldBe Right(RealSeq(expected))
     }
     " doubles" in {
       val input = Sequence(Literal(1), Literal(2))
@@ -31,7 +31,7 @@ class MapReduceTests extends FreeSpec with Matchers {
 
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(Some(RealSeq(List(0.1592356687898089, 0.3184713375796178))), None)
+      result shouldBe Right(RealSeq(List(0.1592356687898089, 0.3184713375796178)))
     }
     " single int. An error message should be returned." in {
       val input = Literal(1)
@@ -39,7 +39,7 @@ class MapReduceTests extends FreeSpec with Matchers {
 
       val result = MapReduce.calc(expr, Context())
 
-      result.error.get.msg shouldBe "map works over sequences only"
+      result.left.get.msg shouldBe "map works over sequences only"
     }
   }
   "Reducing of sequence of" - {
@@ -48,7 +48,7 @@ class MapReduceTests extends FreeSpec with Matchers {
       val expr = ReduceSeq(input, Literal(0), Id("x"), Id("y"), Plus(Id("x"), Id("y")))
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(Some(Num(0 + 1 + 2 + 3)), None)
+      result shouldBe Right(Num(0 + 1 + 2 + 3))
     }
     " doubles" in {
       val input = Sequence(Literal(0), Literal(1))
@@ -56,21 +56,21 @@ class MapReduceTests extends FreeSpec with Matchers {
       val expr = ReduceSeq(inputSeq, Literal(1.0), Id("x"), Id("y"), Mul(Id("x"), Id("y")))
       val result = MapReduce.calc(expr, Context())
 
-      result shouldBe ExprResult(Some(Real(1.0*3.14*(1.0 + 3.14))), None)
+      result shouldBe Right(Real(1.0*3.14*(1.0 + 3.14)))
     }
     " not sequence" in {
       val input = Literal(0)
       val expr = ReduceSeq(input, Literal(1.0), Id("x"), Id("y"), Mul(Id("x"), Id("y")))
       val result = MapReduce.calc(expr, Context())
 
-      result.error.get.msg shouldBe "reduce works over sequences only"
+      result.left.get.msg shouldBe "reduce works over sequences only"
     }
     " sequence but produce not numbers" in {
       val input = Sequence(Literal(0), Literal(1))
       val expr = ReduceSeq(input, Literal(1.0), Id("x"), Id("y"), Sequence(Literal(0), Literal(1)))
       val result = MapReduce.calc(expr, Context())
 
-      result.error.get.msg shouldBe "reduce produces wrong type: mur.NumSeq"
+      result.left.get.msg shouldBe "reduce produces wrong type: mur.NumSeq"
     }
   }
 }

@@ -50,43 +50,44 @@ sealed trait SeqValue extends ExprValue {
 case class NumSeq(seq: List[Int]) extends SeqValue
 case class RealSeq(seq: List[Double]) extends SeqValue
 
-// Result of calculation of an expression: value or error
-case class ExprResult(value: Option[ExprValue], error: Option[Error] = None)
-
 object Expr {
-  def calc(expr: Expr, context: Context): ExprResult = {
+  // Result of calculation of an expression: value or error
+  type Result = Either[Error, ExprValue]
+
+  def calc(expr: Expr, context: Context): Result = {
     val ctx = context.copy(line = expr.pos.line, column = expr.pos.column)
 
     expr match {
-      case Literal(d: Double) => ExprResult(Some(Real(d)))
-      case Literal(i: Int) => ExprResult(Some(Num(i)))
-      case Literal(v) => error(ctx, s"Invalid literal type (${v.getClass.getName})")
+      case Literal(d: Double) => Right(Real(d))
+      case Literal(i: Int) => Right(Num(i))
+      case Literal(v) => error(ctx, s"invalid literal type (${v.getClass.getName})")
       case Brackets(expr) => calc(expr, ctx)
       case Id(name) =>
         ctx.ids.get(name) match { // Look up the identifier in the ids map in context
-          case None => error(ctx, s"Identifier $name is not defined")
-          case value => ExprResult(value)
+          case None => error(ctx, s"identifier `$name` is not defined")
+          case Some(value) => Right(value)
         }
       case Sequence(begin, end) =>
         // Materialise begin and end of the expression. Supported only Nums
         val (beginResult, endResult) = (calc(begin, ctx), calc(end, ctx))
         (beginResult, endResult) match {
-          case (ExprResult(Some(Num(bv)), None), ExprResult(Some(Num(ev)), None)) =>
+          case (Right(Num(bv)), Right(Num(ev))) =>
             if (bv <= ev) // Supported only ascending sequence of numbers
-              ExprResult(Some(NumSeq(bv to ev toList)), None)
+              Right(NumSeq(bv to ev toList))
             else
-              error(ctx, s"Wrong params of the sequence: ${bv}..${ev}")
-          case (error @ ExprResult(None, _), _) => error
-          case (_, error @ ExprResult(None, _)) => error
+              error(ctx, s"wrong params of the sequence: ${bv}..${ev}")
+          case (error @ Left(_), _) => error
+          case (_, error @ Left(_)) => error
+          case (_, _) => error(ctx, s"wrong type of sequence begin or/and end")
         }
       case op: Op =>
         // Materialisation of left operand and after that right operand even if
         // the left operand is invalid.
         val (leftValue, rightValue) = (calc(op.left, ctx), calc(op.right, ctx))
         (leftValue, rightValue) match {
-          case (lErr @ ExprResult(None, _), _) => lErr
-          case (_, rErr @ ExprResult(None, _)) => rErr
-          case (ExprResult(Some(lvalue), _), ExprResult(Some(rvalue), _)) =>
+          case (error @ Left(_), _) => error
+          case (_, error @ Left(_)) => error
+          case (Right(lvalue), Right(rvalue)) =>
             op match {
               case _: Plus => ExprValue.plus(ctx, lvalue, rvalue)
               case _: Minus => ExprValue.minus(ctx, lvalue, rvalue)
@@ -100,55 +101,55 @@ object Expr {
     }
   }
 
-  def error(ctx: Context, msg: String): ExprResult = {
-    ExprResult(None, Some(Error(msg = msg, line = ctx.line, column = ctx.column)))
+  def error(ctx: Context, msg: String): Result = {
+    Left(Error(msg = msg, line = ctx.line, column = ctx.column))
   }
 }
 
 object ExprValue {
   import Expr.error
 
-  def plus(ctx: Context, l: ExprValue, r: ExprValue): ExprResult = (l, r) match {
-    case (Num(li), Num(ri)) => ExprResult(Some(Num(li + ri))) // Should we handle overflow ?
-    case (Num(li), Real(rr)) => ExprResult(Some(Real(li + rr)))
-    case (Real(lr), Num(ri)) => ExprResult(Some(Real(lr + ri)))
-    case (Real(lr), Real(rr)) => ExprResult(Some(Real(lr + rr)))
-    case (_: Num | _: Real, _) => error(ctx, s"Wrong right operand of '+': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"Wrong left operand of '+': ${l.getClass.getName}")
+  def plus(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
+    case (Num(li), Num(ri)) => Right(Num(li + ri)) // Should we handle overflow ?
+    case (Num(li), Real(rr)) => Right(Real(li + rr))
+    case (Real(lr), Num(ri)) => Right(Real(lr + ri))
+    case (Real(lr), Real(rr)) => Right(Real(lr + rr))
+    case (_: Num | _: Real, _) => error(ctx, s"wrong right operand of '+': ${r.getClass.getName}")
+    case (_, _) => error(ctx, s"wrong left operand of '+': ${l.getClass.getName}")
   }
-  def minus(ctx: Context, l: ExprValue, r: ExprValue): ExprResult = (l, r) match {
-    case (Num(li), Num(ri)) => ExprResult(Some(Num(li - ri))) // TODO: Handle overflow of integers
-    case (Num(li), Real(rr)) => ExprResult(Some(Real(li - rr)))
-    case (Real(lr), Num(ri)) => ExprResult(Some(Real(lr - ri)))
-    case (Real(lr), Real(rr)) => ExprResult(Some(Real(lr - rr)))
-    case (_: Num | _: Real, _) => error(ctx, s"Wrong right operand of '+': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"Wrong left operand of '+': ${l.getClass.getName}")
+  def minus(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
+    case (Num(li), Num(ri)) => Right(Num(li - ri)) // TODO: Handle overflow of integers
+    case (Num(li), Real(rr)) => Right(Real(li - rr))
+    case (Real(lr), Num(ri)) => Right(Real(lr - ri))
+    case (Real(lr), Real(rr)) => Right(Real(lr - rr))
+    case (_: Num | _: Real, _) => error(ctx, s"wrong right operand of '+': ${r.getClass.getName}")
+    case (_, _) => error(ctx, s"wrong left operand of '+': ${l.getClass.getName}")
   }
-  def mul(ctx: Context, l: ExprValue, r: ExprValue): ExprResult = (l, r) match {
-    case (Num(li), Num(ri)) => ExprResult(Some(Num(li * ri))) // TODO: Handle overflow of integers
-    case (Num(li), Real(rr)) => ExprResult(Some(Real(li * rr)))
-    case (Real(lr), Num(ri)) => ExprResult(Some(Real(lr * ri)))
-    case (Real(lr), Real(rr)) => ExprResult(Some(Real(lr * rr)))
-    case (_: Num | _: Real, _) => error(ctx, s"Wrong right operand of '+': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"Wrong left operand of '+': ${l.getClass.getName}")
+  def mul(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
+    case (Num(li), Num(ri)) => Right(Num(li * ri)) // TODO: Handle overflow of integers
+    case (Num(li), Real(rr)) => Right(Real(li * rr))
+    case (Real(lr), Num(ri)) => Right(Real(lr * ri))
+    case (Real(lr), Real(rr)) => Right(Real(lr * rr))
+    case (_: Num | _: Real, _) => error(ctx, s"wrong right operand of '+': ${r.getClass.getName}")
+    case (_, _) => error(ctx, s"wrong left operand of '+': ${l.getClass.getName}")
   }
-  def div(ctx: Context, l: ExprValue, r: ExprValue): ExprResult = (l, r) match {
-    case (_, Num(ri)) if ri == 0 => error(ctx, "Division by zero")
-    case (_, Real(rr)) if rr == 0.0D => error(ctx, "Division by zero")
-    case (Num(li), Num(ri)) => ExprResult(Some(Real(li.toDouble / ri)))
-    case (Num(li), Real(rr)) => ExprResult(Some(Real(li / rr)))
-    case (Real(lr), Num(ri)) => ExprResult(Some(Real(lr / ri)))
-    case (Real(lr), Real(rr)) => ExprResult(Some(Real(lr / rr)))
-    case (_: Num | _: Real, _) => error(ctx, s"Wrong right operand of '+': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"Wrong left operand of '+': ${l.getClass.getName}")
+  def div(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
+    case (_, Num(ri)) if ri == 0 => error(ctx, "division by zero")
+    case (_, Real(rr)) if rr == 0.0D => error(ctx, "division by zero")
+    case (Num(li), Num(ri)) => Right(Real(li.toDouble / ri))
+    case (Num(li), Real(rr)) => Right(Real(li / rr))
+    case (Real(lr), Num(ri)) => Right(Real(lr / ri))
+    case (Real(lr), Real(rr)) => Right(Real(lr / rr))
+    case (_: Num | _: Real, _) => error(ctx, s"wrong right operand of '+': ${r.getClass.getName}")
+    case (_, _) => error(ctx, s"wrong left operand of '+': ${l.getClass.getName}")
   }
-  def pow(ctx: Context, l: ExprValue, r: ExprValue): ExprResult = (l, r) match {
-    case (Num(li), Num(ri)) => ExprResult(Some(Num(scala.math.pow(li, ri).toInt))) // Should we handle overflow ?
-    case (Num(li), Real(rr)) => ExprResult(Some(Real(scala.math.pow(li, rr))))
-    case (Real(lr), Num(ri)) => ExprResult(Some(Real(scala.math.pow(lr, ri))))
-    case (Real(lr), Real(rr)) => ExprResult(Some(Real(scala.math.pow(lr, rr))))
-    case (_: Num | _: Real, _) => error(ctx, s"Wrong right operand of '+': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"Wrong left operand of '+': ${l.getClass.getName}")
+  def pow(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
+    case (Num(li), Num(ri)) => Right(Num(scala.math.pow(li, ri).toInt)) // Should we handle overflow ?
+    case (Num(li), Real(rr)) => Right(Real(scala.math.pow(li, rr)))
+    case (Real(lr), Num(ri)) => Right(Real(scala.math.pow(lr, ri)))
+    case (Real(lr), Real(rr)) => Right(Real(scala.math.pow(lr, rr)))
+    case (_: Num | _: Real, _) => error(ctx, s"wrong right operand of '+': ${r.getClass.getName}")
+    case (_, _) => error(ctx, s"wrong left operand of '+': ${l.getClass.getName}")
   }
 
   def append(seq: ExprValue, elem: ExprValue): ExprValue = {
