@@ -21,7 +21,9 @@ case class Settings(
 
 /** Context keeps state of interpretation
   * @param ids - mapping identifiers to its values
-  * @param line - currently processing line. Starting from 0
+  * @param settings - parameters for the interpreter
+  * @param line - currently processing line.
+  * @param column - position in the line of currently processing expr or statement
   */
 case class Context(
                     ids: mutable.Map[String, ExprValue] = mutable.Map(),
