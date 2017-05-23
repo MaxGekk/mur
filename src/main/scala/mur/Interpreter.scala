@@ -3,11 +3,9 @@ package mur
 import scala.collection.mutable
 
 /** Error description */
-case class Error(line: Int = -1, column: Int = -1, msg: String = "No error") {
+case class Error(line: Int, column: Int, msg: String = "No error") {
   override def toString: String = {
-    val suffix = if (line != -1) {
-      if (column == -1) s" at line = ${line}" else s" at line=${line}, column=$column"
-    } else ""
+    val suffix = s" at line=${line}, column=$column"
     msg ++ suffix
   }
 }
@@ -31,16 +29,16 @@ case class Settings(chunkSize: Int = 65536)
 case class Context(
                     ids: mutable.Map[String, ExprValue] = mutable.Map(),
                     settings: Settings = Settings(),
-                    var line: Int = -1
+                    line: Int = 0,
+                    column: Int = 0
                   )
 
 class Interpreter {
   def run(prog: Program): Result = {
     // Iterates over program statements one-by-one and execute them
     val init = (Context(), Result())
-    val (_, result) = prog.stmts.zipWithIndex.foldLeft(init) { case (acc, (stmt, line)) =>
-      val (ctx, res) = acc
-      ctx.line = stmt.pos.line
+    val (_, result) = prog.stmts.foldLeft(init) { case ((context, res), stmt) =>
+      val ctx = context.copy(line = stmt.pos.line, column = stmt.pos.column)
 
       stmt match {
         // Print a string like : print "Hello, World!"
