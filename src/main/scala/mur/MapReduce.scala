@@ -5,6 +5,7 @@ import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import Expr.error
 import ExprValue.single
+import scala.collection.mutable
 
 /** Calculating results of the map and reduce operations */
 object MapReduce {
@@ -88,6 +89,6 @@ object MapReduce {
 
   def slice(seq: List[AnyVal], ctx: Context) = {
     seq.sliding(ctx.settings.chunkSize, ctx.settings.chunkSize)
-       .map((_, ctx.copy(ids = ctx.ids.clone())))
+       .map((_, ctx.copy(ids = mutable.Map())))
   }
 }
