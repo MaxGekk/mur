@@ -1,6 +1,7 @@
 package mur
 
-import scala.util.parsing.input.Positional
+import scala.collection.mutable
+import scala.util.parsing.input.{Position, Positional}
 
 // Intermediate representation for expressions
 sealed trait Expr extends Positional
@@ -32,7 +33,7 @@ object Expr {
   type Result = Either[Error, ExprValue]
 
   def calc(expr: Expr, context: Context): Result = {
-    val ctx = context.copy(line = expr.pos.line, column = expr.pos.column)
+    val ctx = context.copy(pos = expr.pos)
 
     expr match {
       case Literal(d: Double) => Right(Real(d))
@@ -79,6 +80,31 @@ object Expr {
   }
 
   def error(ctx: Context, msg: String): Result = {
-    Left(Error(msg = msg, line = ctx.line, column = ctx.column))
+    Left(Error(pos = ctx.pos, msg = msg))
+  }
+
+  def positions(expr: Expr, set: mutable.Set[Position]): Unit = {
+    set.add(expr.pos)
+    expr match {
+      case brackets: Brackets =>
+        positions(brackets.expr, set)
+      case seq: Sequence =>
+        positions(seq.begin, set)
+        positions(seq.end, set)
+      case op: Op =>
+        positions(op.left, set)
+        positions(op.right, set)
+      case map: MapSeq =>
+        positions(map.seq, set)
+        positions(map.x, set)
+        positions(map.expr, set)
+      case reduce: ReduceSeq =>
+        positions(reduce.seq, set)
+        positions(reduce.init, set)
+        positions(reduce.x, set)
+        positions(reduce.y, set)
+        positions(reduce.expr, set)
+      case _ => ()
+    }
   }
 }

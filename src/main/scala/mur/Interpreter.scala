@@ -1,12 +1,9 @@
 package mur
 
 import com.typesafe.config.ConfigFactory
-import scala.collection.mutable
 
-/** Error description */
-case class Error(line: Int, column: Int, msg: String = "No error") {
-  override def toString: String = s"at [$line,$column]: $msg"
-}
+import scala.collection.mutable
+import scala.util.parsing.input.{NoPosition, Position}
 
 /** Interpreter settings
   * @param chunkSize - input for map/reduce is split by chunks.
@@ -18,14 +15,12 @@ case class Settings(
 /** Context keeps state of interpretation
   * @param ids - mapping identifiers to its values
   * @param settings - parameters for the interpreter
-  * @param line - currently processing line.
-  * @param column - position in the line of currently processing expr or statement
+  * @param pos - position of currently processing expression.
   */
 case class Context(
                     ids: mutable.Map[String, ExprValue] = mutable.Map(),
                     settings: Settings = Settings(),
-                    line: Int = 0,
-                    column: Int = 0
+                    pos: Position = NoPosition
                   )
 
 object Interpreter {

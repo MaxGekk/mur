@@ -76,7 +76,7 @@ object Parsers extends Parsers {
     parse(new CharSequenceReader(s)) match {
       case Success(res, _) => Right(res)
       case NoSuccess(msg, next) =>
-        Left(mur.Error(next.pos.line, next.pos.column, msg))
+        Left(mur.Error(pos = next.pos, msg))
     }
   }
   def parse(input: CharSequenceReader): ParseResult[Program] = parsePhrase(input)

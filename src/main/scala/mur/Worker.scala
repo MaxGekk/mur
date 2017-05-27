@@ -7,6 +7,7 @@ import mur.Editor.config
 
 import scala.concurrent.duration.Duration
 import scala.swing.Swing
+import scala.util.parsing.input.Position
 
 // A message with new entered text
 case class NewInput(text: String)
@@ -16,21 +17,21 @@ class Worker extends Actor {
 
   def receive = {
     case NewInput(text) =>
-      val (outstr, error) = try {
+      val (outstr, error, end) = try {
         Parsers.parse(text) match {
-          case Left(err) => ("Parsing error " + err, Some(err))
+          case Left(err) => ("Parsing error " + err, Some(err), None)
           case Right(prog) =>
             val result = Interpreter.run(prog)
             result match {
-              case Right(out) => (out.mkString, None)
-              case Left(err) => ("Error " + err, Some(err))
+              case Right(out) => (out.mkString, None, None)
+              case Left(err) => ("Error " + err, Some(err), err.end(prog))
             }
         }
       } catch {
-        case e: Throwable => ("Exception: " + e.toString, None)
+        case e: Throwable => ("Exception: " + e.toString, None, None)
       }
       counter += 1
-      Worker.output(counter, outstr, error)
+      Worker.output(counter, outstr, error, end)
   }
 }
 
@@ -47,7 +48,7 @@ object Worker {
       props(Props(classOf[Worker]))
   }
 
-  def output(counter: Long, outstr: String, error: Option[mur.Error]): Unit = {
+  def output(counter: Long, outstr: String, error: Option[mur.Error], end: Option[Position]): Unit = {
     Swing.onEDT {
       Editor.output.peer.setText(s"[$counter] $outstr\n")
 
@@ -56,10 +57,13 @@ object Worker {
       error foreach { e =>
         import javax.swing.text.DefaultHighlighter
         import java.awt.Color
+        def offset(pos: Position): Int = {
+          Editor.input.peer.getLineStartOffset(pos.line - 1) + pos.column - 1
+        }
         val painter = new DefaultHighlighter.DefaultHighlightPainter(Color.ORANGE)
         highlighter.addHighlight(
-          Editor.input.peer.getLineStartOffset(e.line - 1) + e.column - 1,
-          Editor.input.peer.getLineEndOffset(e.line - 1),
+          offset(e.pos),
+          end map (offset(_)) getOrElse Editor.input.peer.getLineEndOffset(e.pos.line - 1),
           painter
         )
       }
