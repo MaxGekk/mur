@@ -1,13 +1,10 @@
 package mur
 
-import java.util.concurrent.Executors
-
 import akka.actor.{Actor, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy.Restart
 import akka.routing.{DefaultResizer, SmallestMailboxPool}
 import mur.Editor.config
 
-import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 import scala.swing.Swing
 import scala.util.parsing.input.Position
@@ -21,19 +18,15 @@ class Worker extends Actor {
   def receive = {
     case NewInput(text) =>
       val (outstr, error, end) = try {
-        implicit val ec = Worker.threadPool
-        val future = Future {
-          Parsers.parse(text) match {
-            case Left(err) => ("Parsing error " + err, Some(err), None)
-            case Right(prog) =>
-              val result = Interpreter.run(prog)
-              result match {
-                case Right(out) => (out.mkString, None, None)
-                case Left(err) => ("Error " + err, Some(err), err.end(prog))
-              }
-          }
+        Parsers.parse(text) match {
+          case Left(err) => ("Parsing error " + err, Some(err), None)
+          case Right(prog) =>
+            val result = Interpreter.run(prog)
+            result match {
+              case Right(out) => (out.mkString, None, None)
+              case Left(err) => ("Error " + err, Some(err), err.end(prog))
+            }
         }
-        Await.result(future, Duration.Inf)
       } catch {
         case e: Throwable => ("Exception: " + e.toString, None, None)
       }
@@ -75,11 +68,6 @@ object Worker {
         )
       }
     }
-  }
-  val threadPool = {
-    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(
-      config.getInt("map-reduce.thread-pool-size")
-    ))
   }
 }
 
