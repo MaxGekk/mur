@@ -2,13 +2,14 @@ package mur
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 import Expr.error
 import ExprValue.single
 import scala.collection.mutable
 
 /** Calculating results of the map and reduce operations */
 object MapReduce {
+  implicit val ec = Worker.executionContext
+
   def calc(op: MapSeq, ctx: Context): Expr.Result = {
     def mapValues(vals: List[AnyVal]): Expr.Result = {
       val sliced = slice(vals, ctx)

@@ -1,20 +1,22 @@
 package mur
 
+import java.util.concurrent.Executors
+
 import akka.actor.{Actor, OneForOneStrategy, Props}
 import akka.actor.SupervisorStrategy.Restart
 import akka.routing.{DefaultResizer, SmallestMailboxPool}
 import mur.Editor.config
 
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.Duration
 import scala.swing.Swing
 import scala.util.parsing.input.Position
-import scala.concurrent.ExecutionContext.Implicits.global
 
 // A message with new entered text
 case class NewInput(text: String)
 
 class Worker extends Actor {
+  implicit val ec = Worker.executionContext
   var counter = 0L
 
   def receive = {
@@ -73,6 +75,11 @@ object Worker {
         )
       }
     }
+  }
+  val executionContext = {
+    ExecutionContext.fromExecutor(Executors.newFixedThreadPool(
+      config.getInt("map-reduce.thread-pool-size")
+    ))
   }
 }
 
