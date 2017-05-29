@@ -77,6 +77,20 @@ object MapReduce {
     reduceResults(range)
   }
 
+  def calc(sum: SumSeq, ctx: Context): Expr.Result = {
+    def sumValues[@specialized(Int, Double) T : Numeric](vals: Array[T]): T = {
+      val sliced = vals.sliding(ctx.settings.chunkSize, ctx.settings.chunkSize)
+      val futures = sliced.map { chunk => Future { chunk.sum } }
+      val merged = Future.sequence(futures.toIterable).map(_.sum)
+      Await.result(merged, Duration.Inf)
+    }
+    Expr.calc(sum.seq, ctx) match {
+      case Right(NumSeq(s)) => Right(Num(sumValues(s.toArray)))
+      case Right(RealSeq(s)) => Right(Real(sumValues(s.toArray)))
+      case error => error
+    }
+  }
+
   def union(results: Iterable[Expr.Result]): Expr.Result = {
     val initial: Expr.Result = Right(NumSeq(List()))
     results.foldRight(initial) {

@@ -35,7 +35,7 @@ object Interpreter {
     var ctx = Context()
     var result: Result = Right(Seq())
 
-    for (stmt <- prog.stmts if result.isRight) {
+    for (stmt <- Optimizer(prog).stmts if result.isRight) {
       stmt match {
         // Print a string like : print "Hello, World!"
         case Print(str) =>

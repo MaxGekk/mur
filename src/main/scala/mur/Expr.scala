@@ -27,6 +27,7 @@ case class MapSeq(seq: Expr, x: Id, expr: Expr) extends Expr
 // Reducing a sequence by applying of a lambda function:
 // reduce(sequence, init, x y -> x + y)
 case class ReduceSeq(seq: Expr, init: Expr, x: Id, y: Id, expr: Expr) extends Expr
+case class SumSeq(seq: Expr) extends Expr
 
 object Expr {
   // Result of calculation of an expression: value or error
@@ -76,6 +77,7 @@ object Expr {
         }
       case map: MapSeq => MapReduce.calc(map, ctx)
       case reduce: ReduceSeq => MapReduce.calc(reduce, ctx)
+      case sum: SumSeq => MapReduce.calc(sum, ctx)
     }
   }
 
