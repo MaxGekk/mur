@@ -68,11 +68,11 @@ case class Real(value: Double) extends SingleValue {
 }
 
 sealed trait SeqValue extends ExprValue {
-  val seq: List[AnyVal]
+  def seq: List[AnyVal]
   def isSingle: Boolean = false
   override def toString: String = seq.mkString("{",",","}")
-  def ::(seq: SingleValue): SeqValue
-  def ++(seq: SeqValue): SeqValue
+  def ::(single: SingleValue): SeqValue
+  def ++(other: SeqValue): SeqValue
 }
 case class NumSeq(seq: List[Int]) extends SeqValue {
   def ::(single: SingleValue): SeqValue = single match {
@@ -81,6 +81,7 @@ case class NumSeq(seq: List[Int]) extends SeqValue {
   }
   def ++(other: SeqValue): SeqValue = other match {
     case ns: NumSeq => this.copy(seq ++ ns.seq)
+    case range: Range => this.copy(seq ++ range.seq)
     case rs: RealSeq => RealSeq(seq.map(_.toDouble) ++ rs.seq)
   }
 }
@@ -91,7 +92,22 @@ case class RealSeq(seq: List[Double]) extends SeqValue {
   }
   def ++(other: SeqValue): SeqValue = other match {
     case ns: NumSeq => this.copy(seq ++ ns.seq.map(_.toDouble))
+    case range: Range => this.copy(seq ++ range.seq.map(_.toDouble))
     case rs: RealSeq => RealSeq(seq ++ rs.seq)
+  }
+}
+case class Range(begin: Int, end: Int) extends SeqValue {
+  def seq: List[Int] = begin to end toList
+  def ::(single: SingleValue): SeqValue = single match {
+    case n: Num if n.value + 1 == begin => this.copy(begin = n.value)
+    case n: Num => NumSeq(n.value :: seq)
+    case r: Real => RealSeq(r.value :: seq.map(_.toDouble))
+  }
+  def ++(other: SeqValue): SeqValue = other match {
+    case range: Range if end + 1 == range.begin => this.copy(end = range.end)
+    case range: Range => NumSeq(seq ++ range.seq)
+    case ns: NumSeq => NumSeq(seq ++ ns.seq)
+    case rs: RealSeq => RealSeq(seq.map(_.toDouble) ++ rs.seq)
   }
 }
 
@@ -100,33 +116,33 @@ object ExprValue {
 
   def plus(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
     case (lv: SingleValue, rv: SingleValue) => Right(lv + rv)
-    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '+': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"wrong left operand of '+': ${l.getClass.getName}")
+    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '+'")
+    case (_, _) => error(ctx, s"wrong left operand of '+'")
   }
 
   def minus(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
     case (lv: SingleValue, rv: SingleValue) => Right(lv - rv)
-    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '-': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"wrong left operand of '-': ${l.getClass.getName}")
+    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '-'")
+    case (_, _) => error(ctx, s"wrong left operand of '-'")
   }
 
   def mul(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
     case (lv: SingleValue, rv: SingleValue) => Right(lv * rv)
-    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '*': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"wrong left operand of '*': ${l.getClass.getName}")
+    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '*'")
+    case (_, _) => error(ctx, s"wrong left operand of '*'")
   }
 
   def div(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
     case (_: SingleValue, rv: SingleValue) if rv.isZero => error(ctx, "division by zero")
     case (lv: SingleValue, rv: SingleValue) => Right(lv / rv)
-    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '/': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"wrong left operand of '/': ${l.getClass.getName}")
+    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '/'")
+    case (_, _) => error(ctx, s"wrong left operand of '/'")
   }
 
   def pow(ctx: Context, l: ExprValue, r: ExprValue): Expr.Result = (l, r) match {
     case (lv: SingleValue, rv: SingleValue) => Right(lv ^ rv)
-    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '^': ${r.getClass.getName}")
-    case (_, _) => error(ctx, s"wrong left operand of '^': ${l.getClass.getName}")
+    case (_: SingleValue, _) => error(ctx, s"wrong right operand of '^'")
+    case (_, _) => error(ctx, s"wrong left operand of '^'")
   }
 
   def append(seq: ExprValue, elem: ExprValue): ExprValue = (seq, elem) match {
@@ -142,5 +158,3 @@ object ExprValue {
       Num(x.asInstanceOf[Int])
   }
 }
-
-
