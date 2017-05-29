@@ -51,7 +51,7 @@ object Expr {
         (begin, end) match {
           case (Right(Num(bv)), Right(Num(ev))) =>
             if (bv <= ev) // Supported only ascending sequence of numbers
-              Right(NumSeq(bv to ev toList))
+              Right(Range(bv, ev))
             else
               error(ctx, s"wrong params of the sequence. It should be ${bv} <= ${ev}")
           case (error @ Left(_), _) => error

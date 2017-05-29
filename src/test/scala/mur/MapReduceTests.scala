@@ -70,7 +70,7 @@ class MapReduceTests extends FreeSpec with Matchers {
       val expr = ReduceSeq(input, Literal(1.0), Id("x"), Id("y"), Sequence(Literal(0), Literal(1)))
       val result = MapReduce.calc(expr, Context())
 
-      result.left.get.msg shouldBe "lambda produces wrong type: mur.NumSeq"
+      result.left.get.msg shouldBe "lambda produces wrong type"
     }
   }
 }

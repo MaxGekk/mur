@@ -55,7 +55,7 @@ object MapReduce {
             // Keep error and return it
             case (error @ Left(_), _) => error
             case (Right(value), _) if !value.isSingle =>
-              error(ctx, s"lambda produces wrong type: ${value.getClass.getName}")
+              error(ctx, s"lambda produces wrong type")
             case (Right(single: SingleValue), elem) => applyLambda(single.value, elem, context)
           }
         }
