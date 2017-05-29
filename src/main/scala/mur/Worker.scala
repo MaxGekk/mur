@@ -5,9 +5,11 @@ import akka.actor.SupervisorStrategy.Restart
 import akka.routing.{DefaultResizer, SmallestMailboxPool}
 import mur.Editor.config
 
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration.Duration
 import scala.swing.Swing
 import scala.util.parsing.input.Position
+import scala.concurrent.ExecutionContext.Implicits.global
 
 // A message with new entered text
 case class NewInput(text: String)
@@ -17,7 +19,7 @@ class Worker extends Actor {
 
   def receive = {
     case NewInput(text) =>
-      val (outstr, error, end) = try {
+      val future = Future {
         Parsers.parse(text) match {
           case Left(err) => ("Parsing error " + err, Some(err), None)
           case Right(prog) =>
@@ -27,6 +29,9 @@ class Worker extends Actor {
               case Left(err) => ("Error " + err, Some(err), err.end(prog))
             }
         }
+      }
+      val (outstr, error, end) = try {
+        Await.result(future, Duration.Inf)
       } catch {
         case e: Throwable => ("Exception: " + e.toString, None, None)
       }
