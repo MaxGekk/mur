@@ -21,8 +21,8 @@ object MapReduce {
           union(res)
         }
       }
-      val res = Await.result(Future.sequence(futures.toSeq.reverse), Duration.Inf)
-      union(res)
+      val result = Future.sequence(futures.toSeq.reverse).map(union)
+      Await.result(result, Duration.Inf)
     }
     // Materialisation of the first parameter - a sequence
     val range = Expr.calc(op.seq, ctx)
@@ -60,8 +60,9 @@ object MapReduce {
           }
         }
       }
-      val res = Await.result(Future.sequence(futures), Duration.Inf)
-      reduceResults(union(res.toIterable))
+      val merged = Future.sequence(futures).map(x => union(x.toIterable))
+      val res = Await.result(merged, Duration.Inf)
+      reduceResults(res)
     }
     def reduceResults(results: Expr.Result) = results match {
       case Right(value) if !value.isSeq => error(ctx, s"reduce works over sequences only")
