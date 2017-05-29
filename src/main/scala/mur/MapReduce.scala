@@ -60,7 +60,7 @@ object MapReduce {
           }
         }
       }
-      val merged = Future.sequence(futures).map(x => union(x.toIterable))
+      val merged = Future.sequence(futures.toIterable).map(union)
       val res = Await.result(merged, Duration.Inf)
       reduceResults(res)
     }
